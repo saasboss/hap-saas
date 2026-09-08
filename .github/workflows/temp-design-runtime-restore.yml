@@ -1,0 +1,61 @@
+name: Temporary Design runtime restore
+
+on:
+  push:
+    branches:
+      - codex/design-wizard-clarity
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/design-wizard-clarity
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Restore billing constants removed by scoped replacement
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('public/hap/app.js')
+          s=p.read_text()
+          marker='}\nfunction formatDay(iso){'
+          replacement="""}
+
+/* ---------------- Billing ---------------- */
+const HAP_PLAN = {id:'hap',name:'Hap',price:2500,currency:'ALL',interval:'monthly'};
+const PLAN_LABELS = {hap:'Hap',starter:'Hap',growth:'Hap',scale:'Hap'};
+const PLAN_PRICES = {hap:HAP_PLAN.price,starter:HAP_PLAN.price,growth:HAP_PLAN.price,scale:HAP_PLAN.price};
+function formatDay(iso){"""
+          if marker not in s:
+              raise RuntimeError('Expected appearancePage→formatDay boundary not found')
+          if 'const HAP_PLAN =' in s:
+              raise RuntimeError('Billing constants already present; refusing duplicate insert')
+          s=s.replace(marker,replacement,1)
+          p.write_text(s)
+          PY
+      - name: Runtime guard
+        run: |
+          grep -q "const HAP_PLAN" public/hap/app.js
+          grep -q "const PLAN_LABELS" public/hap/app.js
+          grep -q "const PLAN_PRICES" public/hap/app.js
+          node --check public/hap/app.js
+      - name: Install dependencies
+        run: npm install --no-package-lock --ignore-scripts
+      - name: Build
+        run: npm run build
+      - name: Commit restoration and remove temporary workflow
+        shell: bash
+        run: |
+          rm .github/workflows/temp-design-runtime-restore.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/hap/app.js .github/workflows/temp-design-runtime-restore.yml
+          git commit -m "fix: preserve billing runtime while refining Design"
+          git push origin HEAD:codex/design-wizard-clarity
