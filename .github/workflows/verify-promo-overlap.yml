@@ -22,15 +22,15 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Start preview
+      - name: Start browser build
         run: |
-          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/hap-preview.log 2>&1 &
-          echo $! > /tmp/hap-preview.pid
+          npm run dev -- --host 127.0.0.1 --port 4173 > /tmp/hap-dev.log 2>&1 &
+          echo $! > /tmp/hap-dev.pid
           for i in {1..30}; do
             if curl -fsS http://127.0.0.1:4173/r/sofra/admin >/dev/null; then exit 0; fi
             sleep 1
           done
-          cat /tmp/hap-preview.log
+          cat /tmp/hap-dev.log
           exit 1
       - name: Verify 11.1 promotion geometry
         env:
