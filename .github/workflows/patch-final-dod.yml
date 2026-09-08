@@ -22,59 +22,67 @@ jobs:
 
           changed = []
 
-          app = Path('public/hap/app.js')
-          text = app.read_text()
-          old = """ const body = tab==='design' ? (canAccess('design')?appearancePage():noPermissionPage('design'))
+          def replace(path, old, new, all_matches=False):
+              p = Path(path)
+              text = p.read_text()
+              if old in text:
+                  text = text.replace(old, new) if all_matches else text.replace(old, new, 1)
+                  p.write_text(text)
+                  if str(p) not in changed:
+                      changed.append(str(p))
+                  return
+              if new not in text:
+                  raise SystemExit(f'Expected snippet not found in {path}: {old[:120]}')
+
+          replace(
+              'public/hap/app.js',
+              """ const body = tab==='design' ? (canAccess('design')?appearancePage():noPermissionPage('design'))
             : tab==='promotions' ? adminPromote()
-            : adminMenuItems();"""
-          new = """ const body = tab==='design' ? (canAccess('design')?appearancePage():noPermissionPage('design'))
+            : adminMenuItems();""",
+              """ const body = tab==='design' ? (canAccess('design')?appearancePage():noPermissionPage('design'))
             : tab==='promotions' ? (canAccess('promotions')?adminPromote():noPermissionPage('promotions'))
             : adminMenuItems();"""
-          if old in text:
-              text = text.replace(old, new, 1)
-              app.write_text(text)
-              changed.append(str(app))
-          elif new not in text:
-              raise SystemExit('Expected adminMenu permission snippet not found')
+          )
 
-          test = Path('scripts/verify-menu-dod-final.mjs')
-          text = test.read_text()
-
-          replacements = [
-            (
-              "  await page.goto(`${baseUrl}${path}`,{waitUntil:'networkidle'});\n}",
-              "  await page.goto(`${baseUrl}${path}`,{waitUntil:'networkidle'});\n  if(path.startsWith('/menu/')) {\n    const language=guest?.language||'English';\n    const gate=page.locator(`[data-action=\\\"select-language\\\"][data-lang=\\\"${language}\\\"]`);\n    if(await gate.count()) { try { await gate.click({timeout:1500}); } catch {} }\n  }\n}"
-            ),
-            (
+          replace(
+              'scripts/verify-menu-dod-final.mjs',
+              """  await page.goto(`${baseUrl}${path}`,{waitUntil:'networkidle'});
+}""",
+              """  await page.goto(`${baseUrl}${path}`,{waitUntil:'networkidle'});
+  if(path.startsWith('/menu/')) {
+    const language=guest?.language||'English';
+    const gate=page.locator(`[data-action="select-language"][data-lang="${language}"]`);
+    if(await gate.count()) { try { await gate.click({timeout:1500}); } catch {} }
+  }
+}"""
+          )
+          replace(
+              'scripts/verify-menu-dod-final.mjs',
               "assert(m.presentImg&&m.imgLoaded,'Neighbouring valid photo did not render');",
               "assert(m.presentImg===(layout!=='editorial'),`Valid-photo rendering mismatch in ${layout}`);"
-            ),
-            (
+          )
+          replace(
+              'scripts/verify-menu-dod-final.mjs',
               "assert(m.secondImg&&m.imgLoaded,'Valid mixed photo did not load');",
               "assert(m.secondImg===(layout!=='editorial'),`Mixed-photo rendering mismatch in ${layout}`);"
-            ),
-            (
+          )
+          replace(
+              'scripts/verify-menu-dod-final.mjs',
               "await seed(s,'/menu/sofra',{language:'English',displayCurrency:display}); await page.locator('.public-root').waitFor();",
-              "await seed(s,'/menu/sofra',{language:'English',displayCurrency:display}); await page.locator('.public-root').waitFor();\n      if(display==='EUR'){ await page.locator('[data-action=\\\"display-currency\\\"]').click(); await page.locator('[data-action=\\\"set-display-currency\\\"][data-code=\\\"EUR\\\"]').click(); await page.locator('.public-root').waitFor(); }"
-            ),
-            (
-              "await seed(s,'/r/sofra/admin/menu/promotions/new'); await page.locator('[data-action=\\\"promotion-target\\\"][data-id=\\\"truffle-burger\\\"]').click();",
-              "await seed(s,'/r/sofra/admin/menu/promotions'); await page.locator('[data-action=\\\"promo-chooser\\\"]').click(); await page.locator('[data-action=\\\"promotion-target\\\"][data-id=\\\"truffle-burger\\\"]').click();"
-            ),
-            (
-              "const s=clone(baseState); await seed(s,'/r/sofra/admin/menu'); const row=page.locator('[data-action=\\\"expand-item\\\"][data-id=\\\"octopus\\\"]');",
-              "const s=clone(baseState); await seed(s,'/r/sofra/admin/menu'); await page.locator('[data-action=\\\"jump-category\\\"][data-id=\\\"mains\\\"]').click(); const row=page.locator('[data-action=\\\"expand-item\\\"][data-id=\\\"octopus\\\"]');"
-            ),
-          ]
-          for old, new in replacements:
-              if old in text:
-                  text = text.replace(old, new)
-              elif new not in text:
-                  raise SystemExit('Expected verification snippet not found: ' + old[:100])
-
-          if test.read_text() != text:
-              test.write_text(text)
-              changed.append(str(test))
+              """await seed(s,'/menu/sofra',{language:'English',displayCurrency:display}); await page.locator('.public-root').waitFor();
+      if(display==='EUR'){ await page.locator('[data-action="display-currency"]').click(); await page.locator('[data-action="set-display-currency"][data-code="EUR"]').click(); await page.locator('.public-root').waitFor(); }"""
+          )
+          replace(
+              'scripts/verify-menu-dod-final.mjs',
+              """await seed(s,'/r/sofra/admin/menu/promotions/new'); await page.locator('[data-action="promotion-target"][data-id="truffle-burger"]').click();""",
+              """await seed(s,'/r/sofra/admin/menu/promotions'); await page.locator('[data-action="promo-chooser"]').click(); await page.locator('[data-action="promotion-target"][data-id="truffle-burger"]').click();""",
+              all_matches=True
+          )
+          replace(
+              'scripts/verify-menu-dod-final.mjs',
+              """const s=clone(baseState); await seed(s,'/r/sofra/admin/menu'); const row=page.locator('[data-action="expand-item"][data-id="octopus"]');""",
+              """const s=clone(baseState); await seed(s,'/r/sofra/admin/menu'); await page.locator('[data-action="jump-category"][data-id="mains"]').click(); const row=page.locator('[data-action="expand-item"][data-id="octopus"]');"""
+          )
 
           print('Changed:', ', '.join(changed) if changed else 'none')
           PY
