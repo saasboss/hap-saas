@@ -36,6 +36,7 @@ function applySharedStress(state, layoutId, defaults) {
   state.appearance = { ...state.appearance, ...defaults, template: layoutId, mode: 'light' };
   state.restaurant.defaultLanguage = 'English';
   state.restaurant.languages = ['English', 'Deutsch'];
+  state.preview = { ...(state.preview || {}), language: 'Deutsch', languageConfirmed: true };
 }
 function translateCategory(category) {
   category.i18n = category.i18n || {};
