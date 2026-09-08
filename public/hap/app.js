@@ -2047,6 +2047,11 @@ function appearancePage(){
  const progressText=`Step ${d.step+1} of 3 — ${stepCopy[d.step]}`;
  return `<div class="design-page wizard-page"><div class="page-head"><div><div class="eyebrow">Your menu</div><h1 class="page-title">Design</h1></div></div><div class="design-progress" role="progressbar" aria-valuemin="1" aria-valuemax="3" aria-valuenow="${d.step+1}" aria-valuetext="${escapeHtml(progressText)}"><span class="design-progress-track" aria-hidden="true"><i style="width:${((d.step+1)/3)*100}%"></i></span><p>${escapeHtml(progressText)}</p></div><p id="design-summary" class="wizard-summary" aria-live="polite">${escapeHtml(designSummary())}</p><div class="wizard-layout">${draftPreviewPanel(sharedDraftPreview({appearance:a,limit:d.step===2||d.expanded?undefined:2,fullMenu:d.step===2||d.expanded}),d.expanded)}<div class="wizard-form">${d.error?`<p class="promo-warn" role="alert">${escapeHtml(d.error)}</p>`:''}${[layout,brand,review][d.step]}<div class="wizard-actions"><button type="button" class="btn" data-action="design-cancel">Cancel</button>${d.step?`<button type="button" class="btn" data-action="design-step" data-step="${d.step-1}">Back</button>`:''}${d.step<2?`<button type="button" class="btn primary" data-action="design-step" data-step="${d.step+1}">Continue</button>`:'<button type="button" class="btn primary" data-action="design-save">Save design</button>'}</div></div></div></div>`;
 }
+
+/* ---------------- Billing ---------------- */
+const HAP_PLAN = {id:'hap',name:'Hap',price:2500,currency:'ALL',interval:'monthly'};
+const PLAN_LABELS = {hap:'Hap',starter:'Hap',growth:'Hap',scale:'Hap'};
+const PLAN_PRICES = {hap:HAP_PLAN.price,starter:HAP_PLAN.price,growth:HAP_PLAN.price,scale:HAP_PLAN.price};
 function formatDay(iso){
  if(!iso) return 'No end date';
  const d=new Date(iso); if(isNaN(d)) return iso;
