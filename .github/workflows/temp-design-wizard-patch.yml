@@ -23,89 +23,43 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-
-          app_path = Path('public/hap/app.js')
-          css_path = Path('public/hap/styles.css')
-          app = app_path.read_text()
-          css = css_path.read_text()
-
-          def block(src, name):
-              start = src.index(f'function {name}(')
-              end = src.find('\nfunction ', start + 1)
-              if end == -1:
+          import base64
+          app_path=Path('public/hap/app.js')
+          css_path=Path('public/hap/styles.css')
+          app=app_path.read_text()
+          css=css_path.read_text()
+          def block(src,name):
+              start=src.index(f'function {name}(')
+              end=src.find('\nfunction ',start+1)
+              if end==-1:
                   raise RuntimeError(f'Could not find end of {name}')
-              return start, end, src[start:end]
-
-          # Existing real-menu miniature helpers now accept the unsaved Design draft,
-          # so option previews stay truthful after palette/mode changes.
-          for name in ('templatePreview', 'backgroundPreview'):
-              start, end, fn = block(app, name)
-              if name == 'templatePreview':
-                  fn2 = fn.replace('function templatePreview(id){\n const a=state.appearance;', 'function templatePreview(id,appearance){\n const a=appearance||state.appearance;', 1)
+              return start,end,src[start:end]
+          for name in ('templatePreview','backgroundPreview'):
+              start,end,fn=block(app,name)
+              if name=='templatePreview':
+                  fn2=fn.replace('function templatePreview(id){\n const a=state.appearance;','function templatePreview(id,appearance){\n const a=appearance||state.appearance;',1)
               else:
-                  fn2 = fn.replace('function backgroundPreview(id){\n const a=state.appearance;', 'function backgroundPreview(id,appearance){\n const a=appearance||state.appearance;', 1)
-              fn2 = fn2.replace("state.theme==='dark'", "a.mode==='dark'")
-              if fn2 == fn:
+                  fn2=fn.replace('function backgroundPreview(id){\n const a=state.appearance;','function backgroundPreview(id,appearance){\n const a=appearance||state.appearance;',1)
+              fn2=fn2.replace("state.theme==='dark'","a.mode==='dark'")
+              if fn2==fn:
                   raise RuntimeError(f'{name} patch did not apply')
-              app = app[:start] + fn2 + app[end:]
-
-          # Keep the larger preview and every miniature option in sync without a full
-          # page rerender, preserving scroll/focus while the owner experiments.
-          start, end, fn = block(app, 'refreshDesignPreview')
-          marker = " document.querySelectorAll('[data-action=\"design-choice\"]').forEach(el=>{const yes=String(d.appearance[el.dataset.key])===el.dataset.value;el.classList.toggle('selected',yes);el.setAttribute('aria-pressed',String(yes));});"
-          addition = marker + "\n document.querySelectorAll('[data-design-layout-preview]').forEach(holder=>{holder.innerHTML=templatePreview(holder.dataset.designLayoutPreview,d.appearance);});\n document.querySelectorAll('[data-design-background-preview]').forEach(holder=>{holder.innerHTML=backgroundPreview(holder.dataset.designBackgroundPreview,d.appearance);});\n requestAnimationFrame(scaleTemplatePreviews);"
+              app=app[:start]+fn2+app[end:]
+          start,end,fn=block(app,'refreshDesignPreview')
+          marker=" document.querySelectorAll('[data-action=\"design-choice\"]').forEach(el=>{const yes=String(d.appearance[el.dataset.key])===el.dataset.value;el.classList.toggle('selected',yes);el.setAttribute('aria-pressed',String(yes));});"
+          addition=marker+"\n document.querySelectorAll('[data-design-layout-preview]').forEach(holder=>{holder.innerHTML=templatePreview(holder.dataset.designLayoutPreview,d.appearance);});\n document.querySelectorAll('[data-design-background-preview]').forEach(holder=>{holder.innerHTML=backgroundPreview(holder.dataset.designBackgroundPreview,d.appearance);});\n requestAnimationFrame(scaleTemplatePreviews);"
           if marker not in fn:
               raise RuntimeError('refreshDesignPreview marker not found')
-          fn = fn.replace(marker, addition, 1)
-          app = app[:start] + fn + app[end:]
-
-          # Replace only the Design page renderer. Persistence, save/cancel semantics,
-          # menu data and every other route remain unchanged.
-          start, end, old_fn = block(app, 'appearancePage')
-          new_fn = r'''function appearancePage(){
- const d=designDraft(),a=d.appearance;
- const stepCopy=['Pick a layout for your menu','Choose colours and style','Review and save'];
- const layout=`<h2>Pick a layout for your menu</h2><div class="wizard-choices wizard-layout-choices">${['editorial','modern','grid'].map(id=>{const item=templateOf(id);return `<button type="button" class="wizard-choice ${a.template===id?'selected':''}" data-action="design-choice" data-key="template" data-value="${id}" aria-pressed="${a.template===id}"><span class="wizard-layout-preview" data-design-layout-preview="${id}">${templatePreview(id,a)}</span><span class="wizard-choice-copy"><strong>${item.name}${id==='modern'?' · Recommended':''}</strong><span>${item.sub}</span></span></button>`;}).join('')}</div>`;
- const backgroundChoices=`<div class="appearance-group wizard-background-group"><label>Background style</label><div class="preset-scroll background-scroll wizard-background-scroll">${backgrounds.map(([id,label])=>`<button type="button" class="preset wizard-background-card ${a.background===id?'selected':''}" data-action="design-choice" data-key="background" data-value="${id}" aria-pressed="${a.background===id}"><span class="wizard-background-preview" data-design-background-preview="${id}">${backgroundPreview(id,a)}</span><strong>${escapeHtml(label)}</strong></button>`).join('')}</div></div>`;
- const fineTune=`<details><summary>Fine-tune</summary><div class="form-grid"><label class="field">Custom brand colour<input aria-label="Custom brand colour" type="color" data-design-field="brand" value="${escapeHtml(a.brand)}"></label><label class="field">Typography<select data-design-field="typography">${['mixed','serif','bold'].map(id=>`<option value="${id}" ${a.typography===id?'selected':''}>${id}</option>`).join('')}</select></label><label class="field">Photo shape<select data-design-field="images">${[['soft','Soft corners'],['square','Square'],['none','No photos']].map(([id,label])=>`<option value="${id}" ${a.images===id?'selected':''}>${label}</option>`).join('')}</select></label><label class="field">Card corners<select data-design-field="radius">${[['low','Subtle'],['medium','Rounded'],['high','Very rounded']].map(([id,label])=>`<option value="${id}" ${a.radius===id?'selected':''}>${label}</option>`).join('')}</select></label>${a.template==='editorial'?`<label class="checkbox-label"><input type="checkbox" data-design-field="thumbnails" ${a.thumbnails?'checked':''}> Show thumbnails in Essential</label>`:''}</div></details>`;
- const brand=`<h2>Choose colours and style</h2><div class="wizard-palette-grid">${PALETTES.map(p=>`<button type="button" class="palette-card ${a.palette===p.id?'selected':''}" data-action="design-choice" data-key="palette" data-value="${p.id}" aria-pressed="${a.palette===p.id}"><span class="palette-chip" style="--pc-brand:${p[a.mode].brand};--pc-accent:${p[a.mode].accent};--pc-bg:${p[a.mode].bg}"></span><strong>${escapeHtml(p.name)}</strong></button>`).join('')}</div><div class="segment-control">${['light','dark'].map(mode=>`<button type="button" class="${a.mode===mode?'selected':''}" data-action="design-choice" data-key="mode" data-value="${mode}" aria-pressed="${a.mode===mode}">${mode==='light'?'Light':'Dark'}</button>`).join('')}</div>${backgroundChoices}${fineTune}`;
- const review=`<h2>Review your design</h2><p>Your menu content and prices stay the same.</p><div class="settings-list"><button type="button" class="btn" data-action="design-step" data-step="0">Edit layout</button><button type="button" class="btn" data-action="design-step" data-step="1">Edit brand</button></div>`;
- const progressText=`Step ${d.step+1} of 3 — ${stepCopy[d.step]}`;
- return `<div class="design-page wizard-page"><div class="page-head"><div><div class="eyebrow">Your menu</div><h1 class="page-title">Design</h1></div></div><div class="design-progress" role="progressbar" aria-valuemin="1" aria-valuemax="3" aria-valuenow="${d.step+1}" aria-valuetext="${escapeHtml(progressText)}"><span class="design-progress-track" aria-hidden="true"><i style="width:${((d.step+1)/3)*100}%"></i></span><p>${escapeHtml(progressText)}</p></div><p id="design-summary" class="wizard-summary" aria-live="polite">${escapeHtml(designSummary())}</p><div class="wizard-layout">${draftPreviewPanel(sharedDraftPreview({appearance:a,limit:d.step===2||d.expanded?undefined:2,fullMenu:d.step===2||d.expanded}),d.expanded)}<div class="wizard-form">${d.error?`<p class="promo-warn" role="alert">${escapeHtml(d.error)}</p>`:''}${[layout,brand,review][d.step]}<div class="wizard-actions"><button type="button" class="btn" data-action="design-cancel">Cancel</button>${d.step?`<button type="button" class="btn" data-action="design-step" data-step="${d.step-1}">Back</button>`:''}${d.step<2?`<button type="button" class="btn primary" data-action="design-step" data-step="${d.step+1}">Continue</button>`:'<button type="button" class="btn primary" data-action="design-save">Save design</button>'}</div></div></div></div>`;
-}'''
+          fn=fn.replace(marker,addition,1)
+          app=app[:start]+fn+app[end:]
+          start,end,old_fn=block(app,'appearancePage')
           if 'More options' not in old_fn or 'wizard-steps' not in old_fn:
               raise RuntimeError('appearancePage baseline did not match expected UI')
-          app = app[:start] + new_fn + app[end:]
-
-          marker_css = '/* --- Design wizard clarity: visual choices without changing persistence --- */'
+          new_fn=base64.b64decode('ZnVuY3Rpb24gYXBwZWFyYW5jZVBhZ2UoKXsKIGNvbnN0IGQ9ZGVzaWduRHJhZnQoKSxhPWQuYXBwZWFyYW5jZTsKIGNvbnN0IHN0ZXBDb3B5PVsnUGljayBhIGxheW91dCBmb3IgeW91ciBtZW51JywnQ2hvb3NlIGNvbG91cnMgYW5kIHN0eWxlJywnUmV2aWV3IGFuZCBzYXZlJ107CiBjb25zdCBsYXlvdXQ9YDxoMj5QaWNrIGEgbGF5b3V0IGZvciB5b3VyIG1lbnU8L2gyPjxkaXYgY2xhc3M9IndpemFyZC1jaG9pY2VzIHdpemFyZC1sYXlvdXQtY2hvaWNlcyI+JHtbJ2VkaXRvcmlhbCcsJ21vZGVybicsJ2dyaWQnXS5tYXAoaWQ9Pntjb25zdCBpdGVtPXRlbXBsYXRlT2YoaWQpO3JldHVybiBgPGJ1dHRvbiB0eXBlPSJidXR0b24iIGNsYXNzPSJ3aXphcmQtY2hvaWNlICR7YS50ZW1wbGF0ZT09PWlkPydzZWxlY3RlZCc6Jyd9IiBkYXRhLWFjdGlvbj0iZGVzaWduLWNob2ljZSIgZGF0YS1rZXk9InRlbXBsYXRlIiBkYXRhLXZhbHVlPSIke2lkfSIgYXJpYS1wcmVzc2VkPSIke2EudGVtcGxhdGU9PT1pZH0iPjxzcGFuIGNsYXNzPSJ3aXphcmQtbGF5b3V0LXByZXZpZXciIGRhdGEtZGVzaWduLWxheW91dC1wcmV2aWV3PSIke2lkfSI+JHt0ZW1wbGF0ZVByZXZpZXcoaWQsYSl9PC9zcGFuPjxzcGFuIGNsYXNzPSJ3aXphcmQtY2hvaWNlLWNvcHkiPjxzdHJvbmc+JHtpdGVtLm5hbWV9JHtpZD09PSdtb2Rlcm4nPycgwrcgUmVjb21tZW5kZWQnOicnfTwvc3Ryb25nPjxzcGFuPiR7aXRlbS5zdWJ9PC9zcGFuPjwvc3Bhbj48L2J1dHRvbj5gO30pLmpvaW4oJycpfTwvZGl2PmA7CiBjb25zdCBiYWNrZ3JvdW5kQ2hvaWNlcz1gPGRpdiBjbGFzcz0iYXBwZWFyYW5jZS1ncm91cCB3aXphcmQtYmFja2dyb3VuZC1ncm91cCI+PGxhYmVsPkJhY2tncm91bmQgc3R5bGU8L2xhYmVsPjxkaXYgY2xhc3M9InByZXNldC1zY3JvbGwgYmFja2dyb3VuZC1zY3JvbGwgd2l6YXJkLWJhY2tncm91bmQtc2Nyb2xsIj4ke2JhY2tncm91bmRzLm1hcCgoW2lkLGxhYmVsXSk9PmA8YnV0dG9uIHR5cGU9ImJ1dHRvbiIgY2xhc3M9InByZXNldCB3aXphcmQtYmFja2dyb3VuZC1jYXJkICR7YS5iYWNrZ3JvdW5kPT09aWQ/J3NlbGVjdGVkJzonJ30iIGRhdGEtYWN0aW9uPSJkZXNpZ24tY2hvaWNlIiBkYXRhLWtleT0iYmFja2dyb3VuZCIgZGF0YS12YWx1ZT0iJHtpZH0iIGFyaWEtcHJlc3NlZD0iJHthLmJhY2tncm91bmQ9PT1pZH0iPjxzcGFuIGNsYXNzPSJ3aXphcmQtYmFja2dyb3VuZC1wcmV2aWV3IiBkYXRhLWRlc2lnbi1iYWNrZ3JvdW5kLXByZXZpZXc9IiR7aWR9Ij4ke2JhY2tncm91bmRQcmV2aWV3KGlkLGEpfTwvc3Bhbj48c3Ryb25nPiR7ZXNjYXBlSHRtbChsYWJlbCl9PC9zdHJvbmc+PC9idXR0b24+YCkuam9pbignJyl9PC9kaXY+PC9kaXY+YDsKIGNvbnN0IGZpbmVUdW5lPWA8ZGV0YWlscz48c3VtbWFyeT5GaW5lLXR1bmU8L3N1bW1hcnk+PGRpdiBjbGFzcz0iZm9ybS1ncmlkIj48bGFiZWwgY2xhc3M9ImZpZWxkIj5DdXN0b20gYnJhbmQgY29sb3VyPGlucHV0IGFyaWEtbGFiZWw9IkN1c3RvbSBicmFuZCBjb2xvdXIiIHR5cGU9ImNvbG9yIiBkYXRhLWRlc2lnbi1maWVsZD0iYnJhbmQiIHZhbHVlPSIke2VzY2FwZUh0bWwoYS5icmFuZCl9Ij48L2xhYmVsPjxsYWJlbCBjbGFzcz0iZmllbGQiPlR5cG9ncmFwaHk8c2VsZWN0IGRhdGEtZGVzaWduLWZpZWxkPSJ0eXBvZ3JhcGh5Ij4ke1snbWl4ZWQnLCdzZXJpZicsJ2JvbGQnXS5tYXAoaWQ9PmA8b3B0aW9uIHZhbHVlPSIke2lkfSIgJHthLnR5cG9ncmFwaHk9PT1pZD8nc2VsZWN0ZWQnOicnfT4ke2lkfTwvb3B0aW9uPmApLmpvaW4oJycpfTwvc2VsZWN0PjwvbGFiZWw+PGxhYmVsIGNsYXNzPSJmaWVsZCI+UGhvdG8gc2hhcGU8c2VsZWN0IGRhdGEtZGVzaWduLWZpZWxkPSJpbWFnZXMiPiR7W1snc29mdCcsJ1NvZnQgY29ybmVycyddLFsnc3F1YXJlJywnU3F1YXJlJ10sWydub25lJywnTm8gcGhvdG9zJ11dLm1hcCgoW2lkLGxhYmVsXSk9PmA8b3B0aW9uIHZhbHVlPSIke2lkfSIgJHthLmltYWdlcz09PWlkPydzZWxlY3RlZCc6Jyd9PiR7bGFiZWx9PC9vcHRpb24+YCkuam9pbignJyl9PC9zZWxlY3Q+PC9sYWJlbD48bGFiZWwgY2xhc3M9ImZpZWxkIj5DYXJkIGNvcm5lcnM8c2VsZWN0IGRhdGEtZGVzaWduLWZpZWxkPSJyYWRpdXMiPiR7W1snbG93JywnU3VidGxlJ10sWydtZWRpdW0nLCdSb3VuZGVkJ10sWydoaWdoJywnVmVyeSByb3VuZGVkJ11dLm1hcCgoW2lkLGxhYmVsXSk9PmA8b3B0aW9uIHZhbHVlPSIke2lkfSIgJHthLnJhZGl1cz09PWlkPydzZWxlY3RlZCc6Jyd9PiR7bGFiZWx9PC9vcHRpb24+YCkuam9pbignJyl9PC9zZWxlY3Q+PC9sYWJlbD4ke2EudGVtcGxhdGU9PT0nZWRpdG9yaWFsJz9gPGxhYmVsIGNsYXNzPSJjaGVja2JveC1sYWJlbCI+PGlucHV0IHR5cGU9ImNoZWNrYm94IiBkYXRhLWRlc2lnbi1maWVsZD0idGh1bWJuYWlscyIgJHthLnRodW1ibmFpbHM/J2NoZWNrZWQnOicnfT4gU2hvdyB0aHVtYm5haWxzIGluIEVzc2VudGlhbDwvbGFiZWw+YDonJ308L2Rpdj48L2RldGFpbHM+YDsKIGNvbnN0IGJyYW5kPWA8aDI+Q2hvb3NlIGNvbG91cnMgYW5kIHN0eWxlPC9oMj48ZGl2IGNsYXNzPSJ3aXphcmQtcGFsZXR0ZS1ncmlkIj4ke1BBTEVUVEVTLm1hcChwPT5gPGJ1dHRvbiB0eXBlPSJidXR0b24iIGNsYXNzPSJwYWxldHRlLWNhcmQgJHthLnBhbGV0dGU9PT1wLmlkPydzZWxlY3RlZCc6Jyd9IiBkYXRhLWFjdGlvbj0iZGVzaWduLWNob2ljZSIgZGF0YS1rZXk9InBhbGV0dGUiIGRhdGEtdmFsdWU9IiR7cC5pZH0iIGFyaWEtcHJlc3NlZD0iJHthLnBhbGV0dGU9PT1wLmlkfSI+PHNwYW4gY2xhc3M9InBhbGV0dGUtY2hpcCIgc3R5bGU9Ii0tcGMtYnJhbmQ6JHtwW2EubW9kZV0uYnJhbmR9Oy0tcGMtYWNjZW50OiR7cFthLm1vZGVdLmFjY2VudH07LS1wYy1iZzoke3BbYS5tb2RlXS5iZ30iPjwvc3Bhbj48c3Ryb25nPiR7ZXNjYXBlSHRtbChwLm5hbWUpfTwvc3Ryb25nPjwvYnV0dG9uPmApLmpvaW4oJycpfTwvZGl2PjxkaXYgY2xhc3M9InNlZ21lbnQtY29udHJvbCI+JHtbJ2xpZ2h0JywnZGFyayddLm1hcChtb2RlPT5gPGJ1dHRvbiB0eXBlPSJidXR0b24iIGNsYXNzPSIke2EubW9kZT09PW1vZGU/J3NlbGVjdGVkJzonJ30iIGRhdGEtYWN0aW9uPSJkZXNpZ24tY2hvaWNlIiBkYXRhLWtleT0ibW9kZSIgZGF0YS12YWx1ZT0iJHttb2RlfSIgYXJpYS1wcmVzc2VkPSIke2EubW9kZT09PW1vZGV9Ij4ke21vZGU9PT0nbGlnaHQnPydMaWdodCc6J0RhcmsnfTwvYnV0dG9uPmApLmpvaW4oJycpfTwvZGl2PiR7YmFja2dyb3VuZENob2ljZXN9JHtmaW5lVHVuZX1gOwogY29uc3QgcmV2aWV3PWA8aDI+UmV2aWV3IHlvdXIgZGVzaWduPC9oMj48cD5Zb3VyIG1lbnUgY29udGVudCBhbmQgcHJpY2VzIHN0YXkgdGhlIHNhbWUuPC9wPjxkaXYgY2xhc3M9InNldHRpbmdzLWxpc3QiPjxidXR0b24gdHlwZT0iYnV0dG9uIiBjbGFzcz0iYnRuIiBkYXRhLWFjdGlvbj0iZGVzaWduLXN0ZXAiIGRhdGEtc3RlcD0iMCI+RWRpdCBsYXlvdXQ8L2J1dHRvbj48YnV0dG9uIHR5cGU9ImJ1dHRvbiIgY2xhc3M9ImJ0biIgZGF0YS1hY3Rpb249ImRlc2lnbi1zdGVwIiBkYXRhLXN0ZXA9IjEiPkVkaXQgYnJhbmQ8L2J1dHRvbj48L2Rpdj5gOwogY29uc3QgcHJvZ3Jlc3NUZXh0PWBTdGVwICR7ZC5zdGVwKzF9IG9mIDMg4oCUICR7c3RlcENvcHlbZC5zdGVwXX1gOwogcmV0dXJuIGA8ZGl2IGNsYXNzPSJkZXNpZ24tcGFnZSB3aXphcmQtcGFnZSI+PGRpdiBjbGFzcz0icGFnZS1oZWFkIj48ZGl2PjxkaXYgY2xhc3M9ImV5ZWJyb3ciPllvdXIgbWVudTwvZGl2PjxoMSBjbGFzcz0icGFnZS10aXRsZSI+RGVzaWduPC9oMT48L2Rpdj48L2Rpdj48ZGl2IGNsYXNzPSJkZXNpZ24tcHJvZ3Jlc3MiIHJvbGU9InByb2dyZXNzYmFyIiBhcmlhLXZhbHVlbWluPSIxIiBhcmlhLXZhbHVlbWF4PSIzIiBhcmlhLXZhbHVlbm93PSIke2Quc3RlcCsxfSIgYXJpYS12YWx1ZXRleHQ9IiR7ZXNjYXBlSHRtbChwcm9ncmVzc1RleHQpfSI+PHNwYW4gY2xhc3M9ImRlc2lnbi1wcm9ncmVzcy10cmFjayIgYXJpYS1oaWRkZW49InRydWUiPjxpIHN0eWxlPSJ3aWR0aDokeygoZC5zdGVwKzEpLzMpKjEwMH0lIj48L2k+PC9zcGFuPjxwPiR7ZXNjYXBlSHRtbChwcm9ncmVzc1RleHQpfTwvcD48L2Rpdj48cCBpZD0iZGVzaWduLXN1bW1hcnkiIGNsYXNzPSJ3aXphcmQtc3VtbWFyeSIgYXJpYS1saXZlPSJwb2xpdGUiPiR7ZXNjYXBlSHRtbChkZXNpZ25TdW1tYXJ5KCkpfTwvcD48ZGl2IGNsYXNzPSJ3aXphcmQtbGF5b3V0Ij4ke2RyYWZ0UHJldmlld1BhbmVsKHNoYXJlZERyYWZ0UHJldmlldyh7YXBwZWFyYW5jZTphLGxpbWl0OmQuc3RlcD09PTJ8fGQuZXhwYW5kZWQ/dW5kZWZpbmVkOjIsZnVsbE1lbnU6ZC5zdGVwPT09Mnx8ZC5leHBhbmRlZH0pLGQuZXhwYW5kZWQpfTxkaXYgY2xhc3M9IndpemFyZC1mb3JtIj4ke2QuZXJyb3I/YDxwIGNsYXNzPSJwcm9tby13YXJuIiByb2xlPSJhbGVydCI+JHtlc2NhcGVIdG1sKGQuZXJyb3IpfTwvcD5gOicnfSR7W2xheW91dCxicmFuZCxyZXZpZXddW2Quc3RlcF19PGRpdiBjbGFzcz0id2l6YXJkLWFjdGlvbnMiPjxidXR0b24gdHlwZT0iYnV0dG9uIiBjbGFzcz0iYnRuIiBkYXRhLWFjdGlvbj0iZGVzaWduLWNhbmNlbCI+Q2FuY2VsPC9idXR0b24+JHtkLnN0ZXA/YDxidXR0b24gdHlwZT0iYnV0dG9uIiBjbGFzcz0iYnRuIiBkYXRhLWFjdGlvbj0iZGVzaWduLXN0ZXAiIGRhdGEtc3RlcD0iJHtkLnN0ZXAtMX0iPkJhY2s8L2J1dHRvbj5gOicnfSR7ZC5zdGVwPDI/YDxidXR0b24gdHlwZT0iYnV0dG9uIiBjbGFzcz0iYnRuIHByaW1hcnkiIGRhdGEtYWN0aW9uPSJkZXNpZ24tc3RlcCIgZGF0YS1zdGVwPSIke2Quc3RlcCsxfSI+Q29udGludWU8L2J1dHRvbj5gOic8YnV0dG9uIHR5cGU9ImJ1dHRvbiIgY2xhc3M9ImJ0biBwcmltYXJ5IiBkYXRhLWFjdGlvbj0iZGVzaWduLXNhdmUiPlNhdmUgZGVzaWduPC9idXR0b24+J308L2Rpdj48L2Rpdj48L2Rpdj48L2Rpdj5gOwp9').decode()
+          app=app[:start]+new_fn+app[end:]
+          marker_css='/* --- Design wizard clarity: visual choices without changing persistence --- */'
           if marker_css in css:
               raise RuntimeError('Design clarity CSS already exists')
-          css += r'''
-
-/* --- Design wizard clarity: visual choices without changing persistence --- */
-.design-progress{display:grid;gap:8px;margin:0}
-.design-progress-track{display:block;width:100%;height:4px;overflow:hidden;border-radius:999px;background:var(--surface-2)}
-.design-progress-track i{display:block;height:100%;border-radius:inherit;background:var(--brand);transition:width .18s var(--ease)}
-.design-progress p{margin:0;font-size:12px;font-weight:800;color:var(--muted);line-height:1.35}
-.wizard-layout-choices{gap:10px}
-.wizard-layout-choices .wizard-choice{min-height:0;padding:8px;gap:9px;overflow:hidden}
-.wizard-layout-preview{display:block;width:100%;height:120px;overflow:hidden;border-radius:10px;background:var(--surface-2)}
-.wizard-layout-preview .preset-preview.tpl-live{height:120px;aspect-ratio:auto;margin:0;border-radius:10px}
-.wizard-choice-copy{display:block;padding:1px 4px 4px;min-width:0}
-.wizard-choice-copy>strong{display:block;font-size:13px;line-height:1.25}
-.wizard-choice-copy>span{display:block;margin-top:3px;font-size:11px;line-height:1.35;color:var(--muted)}
-.design-page .segment-control button.selected{background:var(--surface);color:var(--text);box-shadow:0 3px 10px rgba(0,0,0,.08)}
-.wizard-background-group{margin-top:16px!important}
-.wizard-background-scroll{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain;scroll-snap-type:x proximity;padding:1px 1px 5px}
-.wizard-background-scroll::-webkit-scrollbar{display:none}
-.wizard-background-card{flex:0 0 144px;min-height:0;padding:7px;scroll-snap-align:start;text-align:left}
-.wizard-background-card>strong{display:block;padding:7px 3px 3px;font-size:11px;line-height:1.25}
-.wizard-background-preview{display:block;width:100%;height:88px;overflow:hidden;border-radius:9px;background:var(--surface-2)}
-.wizard-background-preview .preset-preview.tpl-live{height:88px;aspect-ratio:auto;margin:0;border-radius:9px}
-.wizard-form details>summary{min-height:44px;display:flex;align-items:center}
-@media(prefers-reduced-motion:reduce){.design-progress-track i{transition:none}.wizard-background-scroll{scroll-snap-type:none}}
-'''
-
+          css+=base64.b64decode('Ci8qIC0tLSBEZXNpZ24gd2l6YXJkIGNsYXJpdHk6IHZpc3VhbCBjaG9pY2VzIHdpdGhvdXQgY2hhbmdpbmcgcGVyc2lzdGVuY2UgLS0tICovCi5kZXNpZ24tcHJvZ3Jlc3N7ZGlzcGxheTpncmlkO2dhcDo4cHg7bWFyZ2luOjB9Ci5kZXNpZ24tcHJvZ3Jlc3MtdHJhY2t7ZGlzcGxheTpibG9jazt3aWR0aDoxMDAlO2hlaWdodDo0cHg7b3ZlcmZsb3c6aGlkZGVuO2JvcmRlci1yYWRpdXM6OTk5cHg7YmFja2dyb3VuZDp2YXIoLS1zdXJmYWNlLTIpfQouZGVzaWduLXByb2dyZXNzLXRyYWNrIGl7ZGlzcGxheTpibG9jaztoZWlnaHQ6MTAwJTtib3JkZXItcmFkaXVzOmluaGVyaXQ7YmFja2dyb3VuZDp2YXIoLS1icmFuZCk7dHJhbnNpdGlvbjp3aWR0aCAuMThzIHZhcigtLWVhc2UpfQouZGVzaWduLXByb2dyZXNzIHB7bWFyZ2luOjA7Zm9udC1zaXplOjEycHg7Zm9udC13ZWlnaHQ6ODAwO2NvbG9yOnZhcigtLW11dGVkKTtsaW5lLWhlaWdodDoxLjM1fQoud2l6YXJkLWxheW91dC1jaG9pY2Vze2dhcDoxMHB4fQoud2l6YXJkLWxheW91dC1jaG9pY2VzIC53aXphcmQtY2hvaWNle21pbi1oZWlnaHQ6MDtwYWRkaW5nOjhweDtnYXA6OXB4O292ZXJmbG93OmhpZGRlbn0KLndpemFyZC1sYXlvdXQtcHJldmlld3tkaXNwbGF5OmJsb2NrO3dpZHRoOjEwMCU7aGVpZ2h0OjEyMHB4O292ZXJmbG93OmhpZGRlbjtib3JkZXItcmFkaXVzOjEwcHg7YmFja2dyb3VuZDp2YXIoLS1zdXJmYWNlLTIpfQoud2l6YXJkLWxheW91dC1wcmV2aWV3IC5wcmVzZXQtcHJldmlldy50cGwtbGl2ZXtoZWlnaHQ6MTIwcHg7YXNwZWN0LXJhdGlvOmF1dG87bWFyZ2luOjA7Ym9yZGVyLXJhZGl1czoxMHB4fQoud2l6YXJkLWNob2ljZS1jb3B5e2Rpc3BsYXk6YmxvY2s7cGFkZGluZzoxcHggNHB4IDRweDttaW4td2lkdGg6MH0KLndpemFyZC1jaG9pY2UtY29weT5zdHJvbmd7ZGlzcGxheTpibG9jaztmb250LXNpemU6MTNweDtsaW5lLWhlaWdodDoxLjI1fQoud2l6YXJkLWNob2ljZS1jb3B5PnNwYW57ZGlzcGxheTpibG9jazttYXJnaW4tdG9wOjNweDtmb250LXNpemU6MTFweDtsaW5lLWhlaWdodDoxLjM1O2NvbG9yOnZhcigtLW11dGVkKX0KLmRlc2lnbi1wYWdlIC5zZWdtZW50LWNvbnRyb2wgYnV0dG9uLnNlbGVjdGVke2JhY2tncm91bmQ6dmFyKC0tc3VyZmFjZSk7Y29sb3I6dmFyKC0tdGV4dCk7Ym94LXNoYWRvdzowIDNweCAxMHB4IHJnYmEoMCwwLDAsLjA4KX0KLndpemFyZC1iYWNrZ3JvdW5kLWdyb3Vwe21hcmdpbi10b3A6MTZweCFpbXBvcnRhbnR9Ci53aXphcmQtYmFja2dyb3VuZC1zY3JvbGx7ZGlzcGxheTpmbGV4O2dhcDo4cHg7b3ZlcmZsb3cteDphdXRvO3Njcm9sbGJhci13aWR0aDpub25lO292ZXJzY3JvbGwtYmVoYXZpb3IteDpjb250YWluO3Njcm9sbC1zbmFwLXR5cGU6eCBwcm94aW1pdHk7cGFkZGluZzoxcHggMXB4IDVweH0KLndpemFyZC1iYWNrZ3JvdW5kLXNjcm9sbDo6LXdlYmtpdC1zY3JvbGxiYXJ7ZGlzcGxheTpub25lfQoud2l6YXJkLWJhY2tncm91bmQtY2FyZHtmbGV4OjAgMCAxNDRweDttaW4taGVpZ2h0OjA7cGFkZGluZzo3cHg7c2Nyb2xsLXNuYXAtYWxpZ246c3RhcnQ7dGV4dC1hbGlnbjpsZWZ0fQoud2l6YXJkLWJhY2tncm91bmQtY2FyZD5zdHJvbmd7ZGlzcGxheTpibG9jaztwYWRkaW5nOjdweCAzcHggM3B4O2ZvbnQtc2l6ZToxMXB4O2xpbmUtaGVpZ2h0OjEuMjV9Ci53aXphcmQtYmFja2dyb3VuZC1wcmV2aWV3e2Rpc3BsYXk6YmxvY2s7d2lkdGg6MTAwJTtoZWlnaHQ6ODhweDtvdmVyZmxvdzpoaWRkZW47Ym9yZGVyLXJhZGl1czo5cHg7YmFja2dyb3VuZDp2YXIoLS1zdXJmYWNlLTIpfQoud2l6YXJkLWJhY2tncm91bmQtcHJldmlldyAucHJlc2V0LXByZXZpZXcudHBsLWxpdmV7aGVpZ2h0Ojg4cHg7YXNwZWN0LXJhdGlvOmF1dG87bWFyZ2luOjA7Ym9yZGVyLXJhZGl1czo5cHh9Ci53aXphcmQtZm9ybSBkZXRhaWxzPnN1bW1hcnl7bWluLWhlaWdodDo0NHB4O2Rpc3BsYXk6ZmxleDthbGlnbi1pdGVtczpjZW50ZXJ9CkBtZWRpYShwcmVmZXJzLXJlZHVjZWQtbW90aW9uOnJlZHVjZSl7LmRlc2lnbi1wcm9ncmVzcy10cmFjayBpe3RyYW5zaXRpb246bm9uZX0ud2l6YXJkLWJhY2tncm91bmQtc2Nyb2xse3Njcm9sbC1zbmFwLXR5cGU6bm9uZX19Cg==').decode()
           app_path.write_text(app)
           css_path.write_text(css)
           PY
