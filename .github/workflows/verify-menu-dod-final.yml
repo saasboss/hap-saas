@@ -42,3 +42,5 @@ jobs:
           name: final-menu-dod-results
           path: final-dod-results.json
           if-no-files-found: error
+
+# Rerun after the verified Promotions permission correction and fixture hardening.
