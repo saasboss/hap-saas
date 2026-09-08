@@ -110,6 +110,7 @@ await verify('11.5', async check => {
       item.item.price=1250; item.item.variants=[]; item.item.promotion=itemPromotion(itemStyle); cat.promotion=categoryPromotion(catStyle);
       await seed(s,'/menu/sofra',{language:'English',displayCurrency:display}); await page.locator('.public-root').waitFor();
       if(display==='EUR'){ await page.locator('[data-action="display-currency"]').click(); await page.locator('[data-action="set-display-currency"][data-code="EUR"]').click(); await page.locator('.public-root').waitFor(); }
+      if(display==='EUR'){ await page.locator('[data-action="display-currency"]').click(); await page.locator('[data-action="set-display-currency"][data-code="EUR"]').click(); await page.locator('.public-root').waitFor(); }
       const m=await page.evaluate(()=>{
         const root=document.querySelector('.public-root'),item=document.querySelector('[data-item-id="truffle-burger"]'),cat=document.querySelector('#cat-desserts');
         const cs=getComputedStyle(root),price=item?.querySelector('.product-price-main')?.textContent?.trim()||'',approx=item?.querySelector('.product-price-approx')?.textContent?.trim()||'';
