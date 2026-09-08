@@ -275,6 +275,7 @@ const ICONS = {
  chili:'<path d="M14.5 4.5c0-1 .8-1.8 1.8-1.8M14.5 4.5c3 1.5 3.8 5 2 8.1C14.5 16.2 10.7 18.5 7 18.5H4.8c0-3.2 1.7-6.1 4.4-7.7 1.9-1.2 4-3.1 5.3-6.3Z"/>',
  image:'<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m4 17.5 4.6-4.2a2 2 0 0 1 2.7 0L20 20"/>',
  calendar:'<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 11h18"/>',
+ star:'<path d="m12 3.6 2.5 5.2 5.5.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.5-.8Z"/>',
  copy:'<rect x="9" y="9" width="12" height="12" rx="2.5"/><path d="M15 5.5A2.5 2.5 0 0 0 12.5 3h-7A2.5 2.5 0 0 0 3 5.5v7A2.5 2.5 0 0 0 5.5 15"/>'
 };
 
@@ -1779,8 +1780,8 @@ function renderAdminItem(i,c){
  return `<div class="admin-item-wrap ${open?'is-open':''}">
   <div class="admin-item ${tone} ${i.status==='soldout'?'is-soldout':''} ${i.status==='hidden'?'is-hidden':''}" data-action="expand-item" data-id="${i.id}" role="button" tabindex="0" aria-expanded="${open}"><img class="admin-item-img" src="${absoluteAsset(i.image)}" alt="${escapeHtml(i.name)}"><div class="admin-item-copy"><strong>${escapeHtml(i.name)}${promoted?'<i class="promo-dot" aria-label="Promoted"></i>':''}</strong><span class="admin-item-meta">${itemPriceLabel(i)} · ${statusLabel}</span></div><span class="mini-icon" aria-hidden="true">${icon(open?'up':'down',16)}</span></div>
   ${open?`<div class="item-expand">
-   <button class="item-toggle-row" data-action="toggle-soldout" data-id="${i.id}" aria-pressed="${i.status==='soldout'}"><div class="item-toggle-copy"><strong>Sold out</strong><span>Mark when temporarily unavailable.</span></div><i class="switch ${i.status==='soldout'?'on':''}"></i></button>
-   <button class="item-toggle-row" data-action="toggle-hidden" data-id="${i.id}" aria-pressed="${i.status==='hidden'}"><div class="item-toggle-copy"><strong>Hidden</strong><span>Hide from guests completely.</span></div><i class="switch ${i.status==='hidden'?'on':''}"></i></button>
+   <button class="item-toggle-row" data-action="toggle-soldout" data-id="${i.id}" aria-pressed="${i.status==='soldout'}"><div class="item-toggle-copy"><strong>Sold out</strong><span>Mark when temporarily unavailable.</span></div><i class="item-switch ${i.status==='soldout'?'on':''}"></i></button>
+   <button class="item-toggle-row" data-action="toggle-hidden" data-id="${i.id}" aria-pressed="${i.status==='hidden'}"><div class="item-toggle-copy"><strong>Hidden</strong><span>Hide from guests completely.</span></div><i class="item-switch ${i.status==='hidden'?'on':''}"></i></button>
    <button class="item-link-row" data-action="quick-item" data-id="${i.id}">Edit price ${icon('chevron',14)}</button>
    <button class="item-link-row" data-tour="promote" data-action="item-actions" data-id="${i.id}">Full editor ${icon('chevron',14)}</button>
   </div>`:''}
