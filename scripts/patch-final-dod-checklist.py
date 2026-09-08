@@ -43,4 +43,4 @@ if entries.strip() not in text:
         raise SystemExit('Progress log anchor not found')
     text = text.rstrip() + entries + '\n'
 
-path.write_text(text)
+path.write_text(text.rstrip() + '\n')
