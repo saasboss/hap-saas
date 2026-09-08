@@ -2013,15 +2013,38 @@ function designSummary(){
  const a=designDraft().appearance;
  return `${templateOf(a.template).name} · ${a.palette==='custom'?'Custom colour':paletteOf(a.palette).name} · ${a.mode==='dark'?'Dark':'Light'}`;
 }
-function refreshDesignPreview(){
- const d=designDraft(),preview=document.getElementById('draft-preview-content'),summary=document.getElementById('design-summary');
- if(preview) preview.innerHTML=sharedDraftPreview({appearance:d.appearance,limit:d.step===2||d.expanded?undefined:2,fullMenu:d.step===2||d.expanded});
- if(summary) summary.textContent=designSummary();
- document.querySelectorAll('[data-action="design-choice"]').forEach(el=>{const yes=String(d.appearance[el.dataset.key])===el.dataset.value;el.classList.toggle('selected',yes);el.setAttribute('aria-pressed',String(yes));});
- document.querySelectorAll('[data-design-layout-preview]').forEach(holder=>{holder.innerHTML=templatePreview(holder.dataset.designLayoutPreview,d.appearance);});
- document.querySelectorAll('[data-design-background-preview]').forEach(holder=>{holder.innerHTML=backgroundPreview(holder.dataset.designBackgroundPreview,d.appearance);});
- requestAnimationFrame(scaleTemplatePreviews);
-}
+  function refreshDesignPreview() {
+    const d = designDraft(),
+      a = d.appearance,
+      preview = document.getElementById("draft-preview-content"),
+      summary = document.getElementById("design-summary");
+    if (preview)
+      preview.innerHTML = sharedDraftPreview({
+        appearance: a,
+        limit: d.expanded ? undefined : 2,
+        fullMenu: d.expanded,
+      });
+    if (summary) summary.textContent = designSummary();
+    const layout = templateOf(a.template);
+    const palette = a.palette === "custom" ? "Custom colour" : paletteOf(a.palette).name;
+    const background = (backgrounds.find(([id]) => id === a.background) || [, a.background])[1];
+    const setText = (id, value) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value;
+    };
+    setText("design-layout-current", layout.name);
+    setText("design-layout-hint", layout.sub);
+    setText("design-brand-current", `${palette} · ${a.mode === "dark" ? "Dark" : "Light"}`);
+    setText("design-background-current", background || a.background);
+    document.querySelectorAll('[data-action="design-choice"]').forEach((el) => {
+      const yes = String(a[el.dataset.key]) === el.dataset.value;
+      el.classList.toggle("selected", yes);
+      if (el.closest(".design-mode")) el.classList.toggle("active", yes);
+      el.setAttribute("aria-pressed", String(yes));
+    });
+    const essentialOnly = document.querySelector("[data-essential-only]");
+    if (essentialOnly) essentialOnly.hidden = a.template !== "editorial";
+  }
 function updateDesignField(el){
  const d=designDraft(),key=el.dataset.designField;
  d.appearance[key]=el.type==='checkbox'?el.checked:el.value;
@@ -2036,18 +2059,85 @@ function saveDesign(){
  if(result.status!=='ok'){d.error=result.error?.message||'Could not save this design. Your choices are still here.';render();return;}
  ui.designDraft=null;toast('Design saved');render();
 }
-function appearancePage(){
- const d=designDraft(),a=d.appearance;
- const stepCopy=['Pick a layout for your menu','Choose colours and style','Review and save'];
- const layout=`<h2>Pick a layout for your menu</h2><div class="wizard-choices wizard-layout-choices">${['editorial','modern','grid'].map(id=>{const item=templateOf(id);return `<button type="button" class="wizard-choice ${a.template===id?'selected':''}" data-action="design-choice" data-key="template" data-value="${id}" aria-pressed="${a.template===id}"><span class="wizard-layout-preview" data-design-layout-preview="${id}">${templatePreview(id,a)}</span><span class="wizard-choice-copy"><strong>${item.name}${id==='modern'?' · Recommended':''}</strong><span>${item.sub}</span></span></button>`;}).join('')}</div>`;
- const backgroundChoices=`<div class="appearance-group wizard-background-group"><label>Background style</label><div class="preset-scroll background-scroll wizard-background-scroll">${backgrounds.map(([id,label])=>`<button type="button" class="preset wizard-background-card ${a.background===id?'selected':''}" data-action="design-choice" data-key="background" data-value="${id}" aria-pressed="${a.background===id}"><span class="wizard-background-preview" data-design-background-preview="${id}">${backgroundPreview(id,a)}</span><strong>${escapeHtml(label)}</strong></button>`).join('')}</div></div>`;
- const fineTune=`<details><summary>Fine-tune</summary><div class="form-grid"><label class="field">Custom brand colour<input aria-label="Custom brand colour" type="color" data-design-field="brand" value="${escapeHtml(a.brand)}"></label><label class="field">Typography<select data-design-field="typography">${['mixed','serif','bold'].map(id=>`<option value="${id}" ${a.typography===id?'selected':''}>${id}</option>`).join('')}</select></label><label class="field">Photo shape<select data-design-field="images">${[['soft','Soft corners'],['square','Square'],['none','No photos']].map(([id,label])=>`<option value="${id}" ${a.images===id?'selected':''}>${label}</option>`).join('')}</select></label><label class="field">Card corners<select data-design-field="radius">${[['low','Subtle'],['medium','Rounded'],['high','Very rounded']].map(([id,label])=>`<option value="${id}" ${a.radius===id?'selected':''}>${label}</option>`).join('')}</select></label>${a.template==='editorial'?`<label class="checkbox-label"><input type="checkbox" data-design-field="thumbnails" ${a.thumbnails?'checked':''}> Show thumbnails in Essential</label>`:''}</div></details>`;
- const brand=`<h2>Choose colours and style</h2><div class="wizard-palette-grid">${PALETTES.map(p=>`<button type="button" class="palette-card ${a.palette===p.id?'selected':''}" data-action="design-choice" data-key="palette" data-value="${p.id}" aria-pressed="${a.palette===p.id}"><span class="palette-chip" style="--pc-brand:${p[a.mode].brand};--pc-accent:${p[a.mode].accent};--pc-bg:${p[a.mode].bg}"></span><strong>${escapeHtml(p.name)}</strong></button>`).join('')}</div><div class="segment-control">${['light','dark'].map(mode=>`<button type="button" class="${a.mode===mode?'selected':''}" data-action="design-choice" data-key="mode" data-value="${mode}" aria-pressed="${a.mode===mode}">${mode==='light'?'Light':'Dark'}</button>`).join('')}</div>${backgroundChoices}${fineTune}`;
- const review=`<h2>Review your design</h2><p>Your menu content and prices stay the same.</p><div class="settings-list"><button type="button" class="btn" data-action="design-step" data-step="0">Edit layout</button><button type="button" class="btn" data-action="design-step" data-step="1">Edit brand</button></div>`;
- const progressText=`Step ${d.step+1} of 3 — ${stepCopy[d.step]}`;
- return `<div class="design-page wizard-page"><div class="page-head"><div><div class="eyebrow">Your menu</div><h1 class="page-title">Design</h1></div></div><div class="design-progress" role="progressbar" aria-valuemin="1" aria-valuemax="3" aria-valuenow="${d.step+1}" aria-valuetext="${escapeHtml(progressText)}"><span class="design-progress-track" aria-hidden="true"><i style="width:${((d.step+1)/3)*100}%"></i></span><p>${escapeHtml(progressText)}</p></div><p id="design-summary" class="wizard-summary" aria-live="polite">${escapeHtml(designSummary())}</p><div class="wizard-layout">${draftPreviewPanel(sharedDraftPreview({appearance:a,limit:d.step===2||d.expanded?undefined:2,fullMenu:d.step===2||d.expanded}),d.expanded)}<div class="wizard-form">${d.error?`<p class="promo-warn" role="alert">${escapeHtml(d.error)}</p>`:''}${[layout,brand,review][d.step]}<div class="wizard-actions"><button type="button" class="btn" data-action="design-cancel">Cancel</button>${d.step?`<button type="button" class="btn" data-action="design-step" data-step="${d.step-1}">Back</button>`:''}${d.step<2?`<button type="button" class="btn primary" data-action="design-step" data-step="${d.step+1}">Continue</button>`:'<button type="button" class="btn primary" data-action="design-save">Save design</button>'}</div></div></div></div>`;
-}
-
+  function appearancePage() {
+    const d = designDraft(),
+      a = d.appearance;
+    const currentLayout = templateOf(a.template);
+    const currentPalette = a.palette === "custom" ? "Custom colour" : paletteOf(a.palette).name;
+    const currentBackground =
+      (backgrounds.find(([id]) => id === a.background) || [, a.background])[1] || a.background;
+    const layoutIcons = { editorial: "menu", modern: "image", grid: "grid" };
+    const layout = `<section class="design-section design-layout-section" aria-labelledby="design-layout-title">
+  <div class="design-section-head"><div><span class="design-section-kicker">Layout</span><strong id="design-layout-title">Choose the structure</strong></div><small id="design-layout-current">${escapeHtml(currentLayout.name)}</small></div>
+  <div class="design-layout-grid" role="group" aria-label="Menu layout">${[
+    "editorial",
+    "modern",
+    "grid",
+  ]
+    .map((id) => {
+      const item = templateOf(id);
+      return `<button type="button" class="design-layout-option ${a.template === id ? "selected" : ""}" data-action="design-choice" data-key="template" data-value="${id}" aria-pressed="${a.template === id}"><span class="design-layout-icon">${icon(layoutIcons[id], 18)}</span><strong>${escapeHtml(item.name)}</strong>${id === "modern" ? "<small>Recommended</small>" : "<small>&nbsp;</small>"}</button>`;
+    })
+    .join("")}</div>
+  <p id="design-layout-hint" class="design-layout-hint">${escapeHtml(currentLayout.sub)}</p>
+ </section>`;
+    const brand = `<details class="design-disclosure">
+  <summary><span><strong>Brand</strong><small id="design-brand-current">${escapeHtml(currentPalette)} · ${a.mode === "dark" ? "Dark" : "Light"}</small></span>${icon("down", 15)}</summary>
+  <div class="design-disclosure-body"><div class="segment-control design-mode" role="group" aria-label="Menu colour mode">${["light", "dark"].map((mode) => `<button type="button" class="${a.mode === mode ? "active selected" : ""}" data-action="design-choice" data-key="mode" data-value="${mode}" aria-pressed="${a.mode === mode}">${mode === "light" ? "Light" : "Dark"}</button>`).join("")}</div>
+   <div class="design-palette-strip" role="group" aria-label="Brand palette">${PALETTES.map((p) => `<button type="button" class="design-palette-option ${a.palette === p.id ? "selected" : ""}" data-action="design-choice" data-key="palette" data-value="${p.id}" aria-pressed="${a.palette === p.id}" aria-label="${escapeHtml(p.name)} palette"><span class="palette-chip" style="--pc-brand:${p[a.mode].brand};--pc-accent:${p[a.mode].accent};--pc-bg:${p[a.mode].bg}"></span><strong>${escapeHtml(p.name)}</strong></button>`).join("")}</div>
+  </div>
+ </details>`;
+    const background = `<details class="design-disclosure">
+  <summary><span><strong>Background</strong><small id="design-background-current">${escapeHtml(currentBackground)}</small></span>${icon("down", 15)}</summary>
+  <div class="design-disclosure-body"><div class="design-background-grid" role="group" aria-label="Background style">${backgrounds.map(([id, label]) => `<button type="button" class="design-background-option ${a.background === id ? "selected" : ""}" data-action="design-choice" data-key="background" data-value="${id}" aria-pressed="${a.background === id}">${escapeHtml(label)}</button>`).join("")}</div></div>
+ </details>`;
+    const fineTune = `<details class="design-disclosure design-fine-tune">
+  <summary><span><strong>Fine-tune</strong><small>Typography, photos &amp; corners</small></span>${icon("down", 15)}</summary>
+  <div class="design-disclosure-body"><div class="design-fine-grid">
+   <label class="field">Custom brand colour<input aria-label="Custom brand colour" type="color" data-design-field="brand" value="${escapeHtml(a.brand)}"></label>
+   <label class="field">Typography<select data-design-field="typography">${[
+     ["mixed", "Mixed"],
+     ["serif", "Serif"],
+     ["bold", "Bold"],
+   ]
+     .map(
+       ([id, label]) =>
+         `<option value="${id}" ${a.typography === id ? "selected" : ""}>${label}</option>`,
+     )
+     .join("")}</select></label>
+   <label class="field">Photo shape<select data-design-field="images">${[
+     ["soft", "Soft corners"],
+     ["square", "Square"],
+     ["none", "No photos"],
+   ]
+     .map(
+       ([id, label]) =>
+         `<option value="${id}" ${a.images === id ? "selected" : ""}>${label}</option>`,
+     )
+     .join("")}</select></label>
+   <label class="field">Card corners<select data-design-field="radius">${[
+     ["low", "Subtle"],
+     ["medium", "Rounded"],
+     ["high", "Very rounded"],
+   ]
+     .map(
+       ([id, label]) =>
+         `<option value="${id}" ${a.radius === id ? "selected" : ""}>${label}</option>`,
+     )
+     .join("")}</select></label>
+   <label class="checkbox-label design-essential-option" data-essential-only ${a.template === "editorial" ? "" : "hidden"}><input type="checkbox" data-design-field="thumbnails" ${a.thumbnails ? "checked" : ""}> Show thumbnails in Essential</label>
+  </div></div>
+ </details>`;
+    return `<div class="design-page design-compact-page">
+  <div class="page-head design-page-head"><div><div class="eyebrow">Your menu</div><h1 class="page-title">Design</h1><p class="page-subtitle">One preview. Change the look without changing your menu.</p></div></div>
+  <p id="design-summary" class="wizard-summary design-summary" aria-live="polite">${escapeHtml(designSummary())}</p>
+  ${draftPreviewPanel(sharedDraftPreview({ appearance: a, limit: d.expanded ? undefined : 2, fullMenu: d.expanded }), d.expanded)}
+  ${d.error ? `<p class="promo-warn design-error" role="alert">${escapeHtml(d.error)}</p>` : ""}
+  ${layout}
+  <div class="design-disclosures">${brand}${background}${fineTune}</div>
+  <div class="design-savebar"><button type="button" class="btn" data-action="design-cancel">Cancel</button><button type="button" class="btn primary" data-action="design-save">Save design</button><span>Changes go live only after Save.</span></div>
+ </div>`;
+  }
 /* ---------------- Billing ---------------- */
 const HAP_PLAN = {id:'hap',name:'Hap',price:2500,currency:'ALL',interval:'monthly'};
 const PLAN_LABELS = {hap:'Hap',starter:'Hap',growth:'Hap',scale:'Hap'};
