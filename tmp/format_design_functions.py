@@ -23,7 +23,8 @@ for pattern, name in patterns:
     formatted_match = re.search(pattern, formatted, flags=re.S)
     if not source_match or not formatted_match:
         raise SystemExit(f'Could not isolate {name}')
-    current = current[:source_match.start()] + formatted_match.group(0).rstrip() + '\n' + current[source_match.end():].lstrip('\n')
+    formatted_function = '  ' + formatted_match.group(0).rstrip()
+    current = current[:source_match.start()] + formatted_function + '\n' + current[source_match.end():].lstrip('\n')
 
 path.write_text(current)
 print('Formatted only the changed Design functions')
