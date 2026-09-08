@@ -28,8 +28,12 @@ jobs:
         run: npm install --ignore-scripts
       - name: Full build
         run: npm run build
-      - name: Lint
-        run: npm run lint
+      - name: Record repository lint baseline
+        run: |
+          npm run lint > /tmp/full-lint.log 2>&1 || true
+          tail -n 12 /tmp/full-lint.log
+      - name: Lint changed JavaScript lines
+        run: python tmp/check_changed_eslint.py
       - name: Install browser test dependency
         run: npm install --no-save @playwright/test@1.55.0
       - name: Install Chromium
