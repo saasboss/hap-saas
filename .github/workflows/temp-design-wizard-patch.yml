@@ -1,0 +1,126 @@
+name: Temporary Design UI patch
+
+on:
+  push:
+    branches:
+      - codex/design-wizard-clarity
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/design-wizard-clarity
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply scoped UI patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          app_path = Path('public/hap/app.js')
+          css_path = Path('public/hap/styles.css')
+          app = app_path.read_text()
+          css = css_path.read_text()
+
+          def block(src, name):
+              start = src.index(f'function {name}(')
+              end = src.find('\nfunction ', start + 1)
+              if end == -1:
+                  raise RuntimeError(f'Could not find end of {name}')
+              return start, end, src[start:end]
+
+          # Existing real-menu miniature helpers now accept the unsaved Design draft,
+          # so option previews stay truthful after palette/mode changes.
+          for name in ('templatePreview', 'backgroundPreview'):
+              start, end, fn = block(app, name)
+              if name == 'templatePreview':
+                  fn2 = fn.replace('function templatePreview(id){\n const a=state.appearance;', 'function templatePreview(id,appearance){\n const a=appearance||state.appearance;', 1)
+              else:
+                  fn2 = fn.replace('function backgroundPreview(id){\n const a=state.appearance;', 'function backgroundPreview(id,appearance){\n const a=appearance||state.appearance;', 1)
+              fn2 = fn2.replace("state.theme==='dark'", "a.mode==='dark'")
+              if fn2 == fn:
+                  raise RuntimeError(f'{name} patch did not apply')
+              app = app[:start] + fn2 + app[end:]
+
+          # Keep the larger preview and every miniature option in sync without a full
+          # page rerender, preserving scroll/focus while the owner experiments.
+          start, end, fn = block(app, 'refreshDesignPreview')
+          marker = " document.querySelectorAll('[data-action=\"design-choice\"]').forEach(el=>{const yes=String(d.appearance[el.dataset.key])===el.dataset.value;el.classList.toggle('selected',yes);el.setAttribute('aria-pressed',String(yes));});"
+          addition = marker + "\n document.querySelectorAll('[data-design-layout-preview]').forEach(holder=>{holder.innerHTML=templatePreview(holder.dataset.designLayoutPreview,d.appearance);});\n document.querySelectorAll('[data-design-background-preview]').forEach(holder=>{holder.innerHTML=backgroundPreview(holder.dataset.designBackgroundPreview,d.appearance);});\n requestAnimationFrame(scaleTemplatePreviews);"
+          if marker not in fn:
+              raise RuntimeError('refreshDesignPreview marker not found')
+          fn = fn.replace(marker, addition, 1)
+          app = app[:start] + fn + app[end:]
+
+          # Replace only the Design page renderer. Persistence, save/cancel semantics,
+          # menu data and every other route remain unchanged.
+          start, end, old_fn = block(app, 'appearancePage')
+          new_fn = r'''function appearancePage(){
+ const d=designDraft(),a=d.appearance;
+ const stepCopy=['Pick a layout for your menu','Choose colours and style','Review and save'];
+ const layout=`<h2>Pick a layout for your menu</h2><div class="wizard-choices wizard-layout-choices">${['editorial','modern','grid'].map(id=>{const item=templateOf(id);return `<button type="button" class="wizard-choice ${a.template===id?'selected':''}" data-action="design-choice" data-key="template" data-value="${id}" aria-pressed="${a.template===id}"><span class="wizard-layout-preview" data-design-layout-preview="${id}">${templatePreview(id,a)}</span><span class="wizard-choice-copy"><strong>${item.name}${id==='modern'?' · Recommended':''}</strong><span>${item.sub}</span></span></button>`;}).join('')}</div>`;
+ const backgroundChoices=`<div class="appearance-group wizard-background-group"><label>Background style</label><div class="preset-scroll background-scroll wizard-background-scroll">${backgrounds.map(([id,label])=>`<button type="button" class="preset wizard-background-card ${a.background===id?'selected':''}" data-action="design-choice" data-key="background" data-value="${id}" aria-pressed="${a.background===id}"><span class="wizard-background-preview" data-design-background-preview="${id}">${backgroundPreview(id,a)}</span><strong>${escapeHtml(label)}</strong></button>`).join('')}</div></div>`;
+ const fineTune=`<details><summary>Fine-tune</summary><div class="form-grid"><label class="field">Custom brand colour<input aria-label="Custom brand colour" type="color" data-design-field="brand" value="${escapeHtml(a.brand)}"></label><label class="field">Typography<select data-design-field="typography">${['mixed','serif','bold'].map(id=>`<option value="${id}" ${a.typography===id?'selected':''}>${id}</option>`).join('')}</select></label><label class="field">Photo shape<select data-design-field="images">${[['soft','Soft corners'],['square','Square'],['none','No photos']].map(([id,label])=>`<option value="${id}" ${a.images===id?'selected':''}>${label}</option>`).join('')}</select></label><label class="field">Card corners<select data-design-field="radius">${[['low','Subtle'],['medium','Rounded'],['high','Very rounded']].map(([id,label])=>`<option value="${id}" ${a.radius===id?'selected':''}>${label}</option>`).join('')}</select></label>${a.template==='editorial'?`<label class="checkbox-label"><input type="checkbox" data-design-field="thumbnails" ${a.thumbnails?'checked':''}> Show thumbnails in Essential</label>`:''}</div></details>`;
+ const brand=`<h2>Choose colours and style</h2><div class="wizard-palette-grid">${PALETTES.map(p=>`<button type="button" class="palette-card ${a.palette===p.id?'selected':''}" data-action="design-choice" data-key="palette" data-value="${p.id}" aria-pressed="${a.palette===p.id}"><span class="palette-chip" style="--pc-brand:${p[a.mode].brand};--pc-accent:${p[a.mode].accent};--pc-bg:${p[a.mode].bg}"></span><strong>${escapeHtml(p.name)}</strong></button>`).join('')}</div><div class="segment-control">${['light','dark'].map(mode=>`<button type="button" class="${a.mode===mode?'selected':''}" data-action="design-choice" data-key="mode" data-value="${mode}" aria-pressed="${a.mode===mode}">${mode==='light'?'Light':'Dark'}</button>`).join('')}</div>${backgroundChoices}${fineTune}`;
+ const review=`<h2>Review your design</h2><p>Your menu content and prices stay the same.</p><div class="settings-list"><button type="button" class="btn" data-action="design-step" data-step="0">Edit layout</button><button type="button" class="btn" data-action="design-step" data-step="1">Edit brand</button></div>`;
+ const progressText=`Step ${d.step+1} of 3 — ${stepCopy[d.step]}`;
+ return `<div class="design-page wizard-page"><div class="page-head"><div><div class="eyebrow">Your menu</div><h1 class="page-title">Design</h1></div></div><div class="design-progress" role="progressbar" aria-valuemin="1" aria-valuemax="3" aria-valuenow="${d.step+1}" aria-valuetext="${escapeHtml(progressText)}"><span class="design-progress-track" aria-hidden="true"><i style="width:${((d.step+1)/3)*100}%"></i></span><p>${escapeHtml(progressText)}</p></div><p id="design-summary" class="wizard-summary" aria-live="polite">${escapeHtml(designSummary())}</p><div class="wizard-layout">${draftPreviewPanel(sharedDraftPreview({appearance:a,limit:d.step===2||d.expanded?undefined:2,fullMenu:d.step===2||d.expanded}),d.expanded)}<div class="wizard-form">${d.error?`<p class="promo-warn" role="alert">${escapeHtml(d.error)}</p>`:''}${[layout,brand,review][d.step]}<div class="wizard-actions"><button type="button" class="btn" data-action="design-cancel">Cancel</button>${d.step?`<button type="button" class="btn" data-action="design-step" data-step="${d.step-1}">Back</button>`:''}${d.step<2?`<button type="button" class="btn primary" data-action="design-step" data-step="${d.step+1}">Continue</button>`:'<button type="button" class="btn primary" data-action="design-save">Save design</button>'}</div></div></div></div>`;
+}'''
+          if 'More options' not in old_fn or 'wizard-steps' not in old_fn:
+              raise RuntimeError('appearancePage baseline did not match expected UI')
+          app = app[:start] + new_fn + app[end:]
+
+          marker_css = '/* --- Design wizard clarity: visual choices without changing persistence --- */'
+          if marker_css in css:
+              raise RuntimeError('Design clarity CSS already exists')
+          css += r'''
+
+/* --- Design wizard clarity: visual choices without changing persistence --- */
+.design-progress{display:grid;gap:8px;margin:0}
+.design-progress-track{display:block;width:100%;height:4px;overflow:hidden;border-radius:999px;background:var(--surface-2)}
+.design-progress-track i{display:block;height:100%;border-radius:inherit;background:var(--brand);transition:width .18s var(--ease)}
+.design-progress p{margin:0;font-size:12px;font-weight:800;color:var(--muted);line-height:1.35}
+.wizard-layout-choices{gap:10px}
+.wizard-layout-choices .wizard-choice{min-height:0;padding:8px;gap:9px;overflow:hidden}
+.wizard-layout-preview{display:block;width:100%;height:120px;overflow:hidden;border-radius:10px;background:var(--surface-2)}
+.wizard-layout-preview .preset-preview.tpl-live{height:120px;aspect-ratio:auto;margin:0;border-radius:10px}
+.wizard-choice-copy{display:block;padding:1px 4px 4px;min-width:0}
+.wizard-choice-copy>strong{display:block;font-size:13px;line-height:1.25}
+.wizard-choice-copy>span{display:block;margin-top:3px;font-size:11px;line-height:1.35;color:var(--muted)}
+.design-page .segment-control button.selected{background:var(--surface);color:var(--text);box-shadow:0 3px 10px rgba(0,0,0,.08)}
+.wizard-background-group{margin-top:16px!important}
+.wizard-background-scroll{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain;scroll-snap-type:x proximity;padding:1px 1px 5px}
+.wizard-background-scroll::-webkit-scrollbar{display:none}
+.wizard-background-card{flex:0 0 144px;min-height:0;padding:7px;scroll-snap-align:start;text-align:left}
+.wizard-background-card>strong{display:block;padding:7px 3px 3px;font-size:11px;line-height:1.25}
+.wizard-background-preview{display:block;width:100%;height:88px;overflow:hidden;border-radius:9px;background:var(--surface-2)}
+.wizard-background-preview .preset-preview.tpl-live{height:88px;aspect-ratio:auto;margin:0;border-radius:9px}
+.wizard-form details>summary{min-height:44px;display:flex;align-items:center}
+@media(prefers-reduced-motion:reduce){.design-progress-track i{transition:none}.wizard-background-scroll{scroll-snap-type:none}}
+'''
+
+          app_path.write_text(app)
+          css_path.write_text(css)
+          PY
+      - name: Syntax check
+        run: node --check public/hap/app.js
+      - name: Install dependencies
+        run: npm install --no-package-lock --ignore-scripts
+      - name: Build
+        run: npm run build
+      - name: Commit patch and remove temporary workflow
+        shell: bash
+        run: |
+          rm .github/workflows/temp-design-wizard-patch.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/hap/app.js public/hap/styles.css .github/workflows/temp-design-wizard-patch.yml
+          git commit -m "ui: clarify Design wizard choices"
+          git push origin HEAD:codex/design-wizard-clarity
