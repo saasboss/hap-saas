@@ -144,7 +144,7 @@ restaurant-only data (allergens) shows only when it exists.
 ## 11. Definition of done (verify all three layouts × three treatments, items and categories)
 
 - [x] 11.1 No overlapping ribbon, title, price, badge, or action.
-- [ ] 11.2 No horizontal overflow at 320, 390, and 430px.
+- [x] 11.2 No horizontal overflow at 320, 390, and 430px.
 - [ ] 11.3 Readable enlarged text, long labels, large prices, translated names.
 - [ ] 11.4 Correct layouts with missing photos and mixed image availability.
 - [ ] 11.5 Consistent light/dark appearance and currency display.
@@ -184,3 +184,5 @@ Append one line per completed box: `- 2026-09-07 — 2.4 Gallery pager removed.`
 - 2026-09-08 — Stage 6: start-day overnight recurrence, strict date/day/time validation, future interval conflict checks on save and resume, explicit device-local timing, derived expiry without storage writes. Fourteen tests include 80 sampled calendar comparisons; browser service/lifecycle/validation checks passed. Full builder diff reviewed; independent reviewer unavailable after usage limit.
 
 - 2026-09-08 — 11.1 final overlap verification: 54 Chromium cases (3 layouts × 3 treatments × item/category × 320/390/430px) passed on the real HAP browser build with no measured collisions between promotion chrome, titles, prices, badges/actions, category heading/count, or first item. Build passed in GitHub Actions run 34255077040.
+
+- 2026-09-08 — 11.2 final horizontal-overflow verification: 54 Chromium cases (3 layouts × 3 treatments × item/category × 320/390/430px) passed on the real HAP browser build with no document, public-root, or promoted-target horizontal overflow. Build passed in GitHub Actions run 34255671480.
