@@ -22,10 +22,12 @@ jobs:
           node-version: 22
       - name: Apply scoped Design patch
         run: python tmp/design_single_screen_patch.py
-      - name: JavaScript syntax
-        run: node --check public/hap/app.js
       - name: Install project dependencies
         run: npm install --ignore-scripts
+      - name: Format only changed Design functions
+        run: python tmp/format_design_functions.py
+      - name: JavaScript syntax
+        run: node --check public/hap/app.js
       - name: Full build
         run: npm run build
       - name: Record repository lint baseline
