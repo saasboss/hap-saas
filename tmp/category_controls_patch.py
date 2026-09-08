@@ -89,7 +89,7 @@ css_block = r'''
 }
 '''
 if CSS_MARKER not in css:
-    css_path.write_text(css.rstrip() + css_block + "\n")
+    css_path.write_text(css.rstrip() + css_block.rstrip() + "\n")
 
 agents_path = Path("AGENTS.md")
 agents = agents_path.read_text()
