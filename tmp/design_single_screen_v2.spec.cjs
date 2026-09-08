@@ -18,11 +18,11 @@ for (const width of widths) {
     const design = page.locator('.design-compact-page');
     await expect(design).toBeVisible();
 
-    // Old wizard/review structure must be gone.
-    await expect(page.getByText(/Step \d of 3/)).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Continue' })).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Back' })).toHaveCount(0);
-    await expect(page.getByText('Review your design')).toHaveCount(0);
+    // Old Design wizard/review controls must be gone. Page-level navigation may still have its own Back control.
+    await expect(design.getByText(/Step \d of 3/)).toHaveCount(0);
+    await expect(design.locator('[data-action="design-step"]')).toHaveCount(0);
+    await expect(design.getByRole('button', { name: 'Continue' })).toHaveCount(0);
+    await expect(design.getByText('Review your design')).toHaveCount(0);
 
     // One real preview, three compact layout choices, three collapsed disclosures.
     await expect(design.locator('.draft-preview-panel')).toHaveCount(1);
