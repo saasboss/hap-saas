@@ -1,6 +1,6 @@
 # Hap — menu design and promotion plan (living checklist)
 
-Status: in progress (see Progress log at the end). **Rule for every agent/remix:** read this file first, pick the
+Status: complete through Definition of Done 11.10. **Rule for every agent/remix:** read this file first, pick the
 first unchecked box, do it, then tick the box (`- [x]`) and add a one-line note with
 the date. Never re-audit or redo checked items. Never delete unchecked items.
 
@@ -146,13 +146,13 @@ restaurant-only data (allergens) shows only when it exists.
 - [x] 11.1 No overlapping ribbon, title, price, badge, or action.
 - [x] 11.2 No horizontal overflow at 320, 390, and 430px.
 - [x] 11.3 Readable enlarged text, long labels, large prices, translated names.
-- [ ] 11.4 Correct layouts with missing photos and mixed image availability.
-- [ ] 11.5 Consistent light/dark appearance and currency display.
-- [ ] 11.6 Preview matches the saved guest presentation.
-- [ ] 11.7 Back, Cancel, and preview navigation behave correctly.
-- [ ] 11.8 Failed saves retain the draft and show an error.
-- [ ] 11.9 Hidden/sold-out items and empty categories handled consistently.
-- [ ] 11.10 Existing routes, permissions, filters, and item-detail interactions still work.
+- [x] 11.4 Correct layouts with missing photos and mixed image availability.
+- [x] 11.5 Consistent light/dark appearance and currency display.
+- [x] 11.6 Preview matches the saved guest presentation.
+- [x] 11.7 Back, Cancel, and preview navigation behave correctly.
+- [x] 11.8 Failed saves retain the draft and show an error.
+- [x] 11.9 Hidden/sold-out items and empty categories handled consistently.
+- [x] 11.10 Existing routes, permissions, filters, and item-detail interactions still work.
 
 ## Progress log
 
@@ -168,8 +168,7 @@ Append one line per completed box: `- 2026-09-07 — 2.4 Gallery pager removed.`
   use in all three layout previews. Verified in-browser at 390px: palette `forest`,
   background `paper`, mode `light` survive a switch to Gallery; no console errors, no
   horizontal overflow.
-- Next unchecked box: 2.1 (rework Essential/Signature/Gallery layout CSS so the three
-  differ structurally), then 2.4 (remove the Gallery horizontal pager).
+- All menu-design and promotion checklist boxes are complete through 11.10; do not reopen completed stages without new evidence of a regression.
 
 - 2026-09-07 — Stage 1: scoped folded ribbons, in-flow notched borders and shared guest-currency prices. 72 browser geometry cases and three price tests passed; build and TypeScript passed. Full builder diff review completed; independent review could not complete due reviewer usage limit.
 
@@ -188,3 +187,11 @@ Append one line per completed box: `- 2026-09-07 — 2.4 Gallery pager removed.`
 - 2026-09-08 — 11.2 final horizontal-overflow verification: 54 Chromium cases (3 layouts × 3 treatments × item/category × 320/390/430px) passed on the real HAP browser build with no document, public-root, or promoted-target horizontal overflow. Build passed in GitHub Actions run 34255671480.
 
 - 2026-09-08 — 11.3 final content-stress verification: after correcting a fixture that had not activated the German guest state, 54 Chromium cases (3 layouts × 3 treatments × item/category × 320/390/430px) passed with 150% enlarged relevant text, long German item/category names, long promotion labels, and a 999,999 Lek price. No clipping, collisions, or overflow were measured. Build passed in GitHub Actions run 34258270194.
+
+- 2026-09-08 — 11.4 final mixed-image verification: 18/18 Chromium cases passed across all three layouts and all three item/category promotion treatments. Missing photos retained title/price and intentional Essential image suppression was respected; no overflow was introduced. Final suite run 34262263122.
+- 2026-09-08 — 11.5 final theme/currency verification: 36/36 Chromium cases passed across light/dark, ALL/EUR guest display, all three layouts, and all three promotion treatments. Final suite run 34262263122.
+- 2026-09-08 — 11.6 final preview-parity verification: 9/9 layout/treatment cases matched the saved guest presentation semantically using the real guest renderer. Final suite run 34262263122.
+- 2026-09-08 — 11.7 final navigation verification: Design Back/Expand/Cancel passed in the full suite; Promotion Back/Expand/Cancel was rechecked with the uniquely scoped accessible Cancel button and passed in targeted Chromium run 34262903352. Cancel left persisted promotion data unchanged.
+- 2026-09-08 — 11.8 final failed-save verification: 2/2 Design and Promotion storage-failure cases retained their drafts, showed an error, and left persisted data unchanged. Final suite run 34262263122.
+- 2026-09-08 — 11.9 final visibility-state verification: 6/6 cases passed across all three layouts for hidden items, sold-out visibility, hide-sold-out behavior, and empty-category removal. Final suite run 34262263122.
+- 2026-09-08 — 11.10 final regression verification: 13/13 route, legacy-route, permission, search/filter, item-detail, and admin-expand cases passed. This verification exposed one real defect before the final pass: Menu › Promotions did not honor `access.promotions=false`; `adminMenu()` now renders the existing `noPermissionPage('promotions')` fallback consistently with Design. Final suite run 34262263122.

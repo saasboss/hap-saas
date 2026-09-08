@@ -1737,7 +1737,7 @@ function menuTabBar(){
 function adminMenu(){
  const tab=menuTab();
  const body = tab==='design' ? (canAccess('design')?appearancePage():noPermissionPage('design'))
-  : tab==='promotions' ? adminPromote()
+  : tab==='promotions' ? (canAccess('promotions')?adminPromote():noPermissionPage('promotions'))
   : adminMenuItems();
  return `${menuTabBar()}<div id="menu-panel" role="tabpanel" aria-labelledby="menu-tab-${tab}">${body}</div>`;
 }
