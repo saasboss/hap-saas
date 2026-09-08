@@ -23,18 +23,13 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import base64
           p=Path('public/hap/app.js')
           s=p.read_text()
           marker='}\nfunction formatDay(iso){'
-          replacement="""}
-
-/* ---------------- Billing ---------------- */
-const HAP_PLAN = {id:'hap',name:'Hap',price:2500,currency:'ALL',interval:'monthly'};
-const PLAN_LABELS = {hap:'Hap',starter:'Hap',growth:'Hap',scale:'Hap'};
-const PLAN_PRICES = {hap:HAP_PLAN.price,starter:HAP_PLAN.price,growth:HAP_PLAN.price,scale:HAP_PLAN.price};
-function formatDay(iso){"""
+          replacement=base64.b64decode('fQoKLyogLS0tLS0tLS0tLS0tLS0tLSBCaWxsaW5nIC0tLS0tLS0tLS0tLS0tLS0gKi8KY29uc3QgSEFQX1BMQU4gPSB7aWQ6J2hhcCcsbmFtZTonSGFwJyxwcmljZToyNTAwLGN1cnJlbmN5OidBTEwnLGludGVydmFsOidtb250aGx5J307CmNvbnN0IFBMQU5fTEFCRUxTID0ge2hhcDonSGFwJyxzdGFydGVyOidIYXAnLGdyb3d0aDonSGFwJyxzY2FsZTonSGFwJ307CmNvbnN0IFBMQU5fUFJJQ0VTID0ge2hhcDpIQVBfUExBTi5wcmljZSxzdGFydGVyOkhBUF9QTEFOLnByaWNlLGdyb3d0aDpIQVBfUExBTi5wcmljZSxzY2FsZTpIQVBfUExBTi5wcmljZX07CmZ1bmN0aW9uIGZvcm1hdERheShpc28pew==').decode()
           if marker not in s:
-              raise RuntimeError('Expected appearancePage→formatDay boundary not found')
+              raise RuntimeError('Expected Design-to-billing boundary not found')
           if 'const HAP_PLAN =' in s:
               raise RuntimeError('Billing constants already present; refusing duplicate insert')
           s=s.replace(marker,replacement,1)
