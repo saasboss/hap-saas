@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-09-06
+Last updated: 2026-09-08
 
 ## Product idea
 
@@ -12,11 +12,9 @@ Last updated: 2026-09-06
 
 ## Now — one current priority
 
-2026-09-07 owner priority: complete the seven-stage menu and promotion redesign in saasboss/trying, synchronized main. Stage 1 merged and Lovable-import verified at 03823aa4f522513a2e1fa8453248bf425a95f3af. Stage 2 merged at 71f83b22edfecdd7b17f459fea02662e2735ca12; Stage 3 merged at 8c689108377fcd41a22c023e055bd35aab6b6a0a; Stage 4 merged at ac89f42932c061a97274e048743d6cd5828fc7b3; Stage 5 merged at 43cb1c2d7d964cbdea97d7ac4f1dafe78b3a3ade; Stage 6 is under review; continue subsequent stages after their checked/reviewed merges. This scoped authorization supersedes the older UI pause below, while preserving every deferred item. See HAP_REDESIGN_EXECUTION_HANDOFF.md.
+Return to Hap's production-MVP definition from the verified browser prototype. The scoped menu/design/promotion redesign and its Definition of Done are complete through 11.10 in `saasboss/remix-of-trying`; do not restart that redesign or launch another broad UI-polish pass without new regression evidence or explicit owner priority.
 
-Previous priority (retained for MVP follow-up):
-
-Define Hap's production MVP from the polished prototype. Start with the smallest complete restaurant workflow: an owner or manager can set up a restaurant menu, create and organize categories and items, update price and availability, publish the mobile guest menu, and share it by QR code. Confirm only the decisions that materially affect product behavior, security, cost, or scope before turning this workflow into implementation tasks.
+Start with the smallest complete restaurant workflow: an owner or manager can set up a restaurant menu, create and organize categories and items, update price and availability, publish the mobile guest menu, and share it by QR code. Confirm only the decisions that materially affect product behavior, security, cost, or scope before turning this workflow into production implementation tasks.
 
 No further broad UI-polish work should begin until the MVP boundary and first success metric are recorded here.
 
@@ -40,24 +38,28 @@ Never delete a deferred item merely because it is inconvenient. Record its reaso
 
 ## Done — merged and verified
 
-- Lovable project `eeee` connected to GitHub repository `saasboss/eeee`.
-- GitHub-to-Lovable synchronization verified with an inert documentation change.
-- Beginner AI workflow, model routing, safety rules, and credit handoff system added.
+- Lovable project **Remix of trying** is connected to GitHub repository `saasboss/remix-of-trying`; GitHub-to-Lovable synchronization has been verified.
+- Beginner AI workflow, model routing, safety rules, design-preflight gate, UI implementation quality gate, and credit handoff system added.
 - **Phase 1 UI/UX, information architecture, action hierarchy, accessibility, and visual-polish tasks completed**, except the intentionally deferred Task 12 bulk-workflow decision.
 - Phase 1 screen work was delivered through separate pull requests and verified in the exact Lovable build.
 - Final responsive matrix passed on the guest menu, Overview, Menu Items, Design, Promotions, QR, Insights, Settings Restaurant/Team/Billing, and Hap Control at 320, 390, 430, and 800px with zero horizontal overflow and no console errors.
-- Final UI verification commit: `dbceba376b3d413e6ecf4be72f7273f60e749be1`.
+- Final UI verification commit from the earlier Phase 1 pass: `dbceba376b3d413e6ecf4be72f7273f60e749be1`.
 - Canonical numbered plan restored at `.lovable/plan.md` while preserving Lovable's separate public-menu category-header plan.
+- **Menu Design + Promotions Definition of Done 11.1–11.10 completed and browser-verified.** Coverage includes promotion/content overlap, 320/390/430 overflow, enlarged/translated/large-price stress content, mixed/missing photos, light/dark and guest currency, preview parity, Back/Cancel navigation, failed-save draft retention, hidden/sold-out/empty states, canonical/legacy routes, permissions, public search/filter, item details, and admin item expansion.
+- Final regression verification exposed and corrected one real permissions inconsistency: Menu › Promotions now respects `access.promotions=false` and renders the same existing no-permission fallback pattern used by Design.
+- GitHub execution discipline now requires classifying product vs fixture/tooling failures, real route/state inspection, idempotent automation, unique selectors, observable waits, narrow patches, and removal of temporary verification tooling before merge.
 
 ## Decisions
 
 - GitHub `main` is the shared source of truth.
+- The active connected repository for this project is `saasboss/remix-of-trying`.
 - `main` must stay usable.
 - Work uses one task, one branch, one writing agent, and one pull request.
 - Other agents review read-only unless explicitly assigned a separate fix.
 - High-risk changes require an Expert model, approved plan, rollback, and second review.
 - Agent continuity comes from commits and handoffs, never credential sharing.
 - Phase 1 is complete; Task 12 remains deferred rather than silently absorbed into another task.
+- The Menu Design + Promotions redesign is complete through Definition of Done 11.10; do not reopen completed stages without new evidence of a regression.
 - Broad UI-polish passes stop here. New work must support the recorded MVP workflow or be explicitly prioritized.
 
 ## Open owner decisions
