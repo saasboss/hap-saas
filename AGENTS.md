@@ -69,29 +69,29 @@ Use the lowest tier that is safe for the task; see `docs/MODEL_ROUTING.md`.
 - Do not burn credits through repeated blind retries.
 - Never weaken tests or safety checks merely to make a task pass.
 
-## Mandatory design preflight for UI/UX
+## Repo-grounded design preflight for UI/UX
 
 Every task that materially changes what a user sees or how they interact must complete a design preflight **before implementation begins**. This includes redesigns, layouts, navigation, interaction patterns, component styling, visual hierarchy, responsive fixes, menu presentation, promotions presentation, admin flows, onboarding, forms, sheets, and visual states.
 
 Required order:
 
-1. Inspect the current implementation, relevant route, components/styles, state, and existing behavior.
-2. Use Product Design when it is available in the current environment.
-3. If Product Design is unavailable, use UX Pilot as the approved fallback and generate a visual or flow direction before implementation.
-4. Treat Product Design/UX Pilot output as design input, not automatically-correct instructions.
-5. Critically compare the output with HAP's existing architecture, canonical flows, product scope, friction goals, established design language, supported mobile widths, and maintainability requirements.
-6. Reject stale, duplicate, generic, low-value, or architecture-breaking suggestions.
-7. Lock the smallest approved UI/UX scope and acceptance criteria.
+1. Inspect the current GitHub/Lovable-synced implementation: route, markup/components, CSS/tokens, state, and existing behavior.
+2. Use the user's screenshot or described problem as evidence when supplied.
+3. Critique the current UI directly: hierarchy, density, friction, responsiveness, accessibility, and whether each control is primary, secondary, or destructive.
+4. Reuse HAP's existing Lovable-built spacing, radii, typography, colors, icons, cards, sheets, buttons, and interaction patterns wherever they fit.
+5. Product Design, UX Pilot, and other external UI generators are **not** required and must not introduce a second visual language into HAP.
+6. Fix the underlying shared cause when safe rather than adding screenshot-specific hacks or globally changing a primitive that is correct elsewhere.
+7. Lock the smallest coherent scope and acceptance criteria.
 8. Only then write or modify implementation code.
 9. Run the full UI/UX implementation quality gate below before push or merge.
 
-Do not skip the design preflight because a change looks small, obvious, urgent, already has a screenshot/mockup, or was suggested by Claude, Lovable, Codex, ChatGPT, or another AI. If neither Product Design nor UX Pilot is available, stop the UI implementation and report the blocker rather than silently proceeding without a preflight.
+Lovable Agent/Visual Edits are optional implementation tools, not a design authority. Prefer GitHub implementation when it avoids Lovable credit usage. Do not invoke Lovable AI merely to satisfy a process step.
 
-Purely non-visual work — documentation-only changes, backend-only work, CI/configuration, security-only fixes, or data migrations — does not require a design preflight unless it also materially changes UI/UX.
+Purely non-visual work — documentation-only changes, backend-only work, CI/configuration, security-only fixes, or data migrations — does not require this preflight unless it also materially changes UI/UX.
 
 ## UI/UX implementation quality gate
 
-Product Design, UX Pilot, screenshots, Lovable output, generated prototypes, and AI suggestions are design input only. They do not lower the engineering standard required for code entering this repository.
+Screenshots, Lovable output, generated prototypes, and AI suggestions are evidence/design input only. They do not lower the engineering standard required for code entering this repository. HAP's existing Lovable-synced UI is the visual reference unless the user explicitly changes direction.
 
 Before any UI/UX implementation is pushed or merged, it must pass all of the following:
 
