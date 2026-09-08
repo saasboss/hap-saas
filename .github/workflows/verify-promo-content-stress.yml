@@ -34,4 +34,11 @@ jobs:
       - name: Verify 11.3 stressed content readability
         env:
           HAP_URL: http://127.0.0.1:4173
-        run: node scripts/verify-promo-content-stress.mjs
+        run: node scripts/verify-promo-content-stress.mjs > stress-results.json
+      - name: Preserve stress results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: promo-content-stress-results
+          path: stress-results.json
+          if-no-files-found: error
