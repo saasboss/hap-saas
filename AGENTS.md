@@ -109,6 +109,25 @@ Before any UI/UX implementation is pushed or merged, it must pass all of the fol
 
 If an implementation looks correct but fails any rule above, it is not ready to push or merge. Prefer a smaller, maintainable implementation over a faster AI-generated one.
 
+## GitHub execution discipline — learn from failures
+
+Every failed test, workflow, patch, or verification attempt must improve the next attempt. Do not blindly retry the same approach.
+
+1. **Classify first.** Determine whether the failure is product code, test fixture, tooling/workflow, stale assumption, or environment. Never change product code until a product defect is proven.
+2. **Read repository reality.** Verify actual routes, state, persistence keys, component behavior, and existing interaction paths before writing tests or patches. Never invent convenience routes or state contracts from memory.
+3. **Use real user paths.** Test the actual button/sheet/action flow unless a canonical deep link is present in the route map.
+4. **Respect intentional behavior.** Do not call deliberate behavior a bug: layouts may intentionally hide photos, images may lazy-load, categories may be collapsed, and controls may appear only in specific states.
+5. **Prefer stable assertions.** Verify user-visible behavior, semantics, geometry, persisted data, and canonical routes. Avoid fragile timing/image-decode/incidental-DOM assertions unless those are the requirement.
+6. **Patch narrowly.** Inspect the exact target snippet first. No broad replacements, giant blind file rewrites, or loosening a failed matcher until it could hit unrelated code.
+7. **Keep CI simple.** Put nontrivial patch/test logic in a temporary script file rather than complex multiline code embedded in workflow YAML.
+8. **Checks before commit.** Syntax/build/relevant tests must pass before a code-changing automation commits. Failed checks leave product code uncommitted.
+9. **Read logs before retrying.** Inspect the exact failing step and artifacts; correct the proven assumption rather than making cosmetic retries.
+10. **Sequential writes only.** Use current blob SHAs and one write path at a time for a file/ref.
+11. **Temporary tooling stays temporary.** Remove debug workflows, patch scripts, Playwright harnesses, and artifacts before the final PR unless deliberately adopting them as maintained tests.
+12. **Final diff is the gate.** Compare the branch to `main` before PR/merge and confirm only intended product/docs changes remain.
+
+Project-specific lessons already learned: `/r/:slug/admin/menu/promotions` is canonical; do not invent `/menu/promotions/new`. Essential may intentionally suppress photos. Do not require immediate `naturalWidth` for lazy images. Do not guess guest language/currency state instead of using the product's real interaction/storage contract. Do not embed complicated Python patching inside GitHub Actions YAML.
+
 ## High-risk gate
 
 For authentication, authorization, payments, database schema or migrations, secrets, production infrastructure, dependency upgrades with breaking changes, destructive operations, or security controls:

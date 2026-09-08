@@ -48,6 +48,11 @@ async function seed(state,path='/menu/sofra',guest={language:'English'}) {
     localStorage.setItem(guestKey,JSON.stringify(guest));
   },{storageKey,guestKey,state,guest});
   await page.goto(`${baseUrl}${path}`,{waitUntil:'networkidle'});
+  if(path.startsWith('/menu/')) {
+    const language=guest?.language||'English';
+    const gate=page.locator(`[data-action="select-language"][data-lang="${language}"]`);
+    if(await gate.count()) { try { await gate.click({timeout:1500}); } catch {} }
+  }
 }
 async function persisted() {
   const raw=await page.evaluate(key=>localStorage.getItem(key),storageKey);
@@ -77,7 +82,7 @@ await verify('11.4', async check => {
         const img=present?.querySelector('.product-img');
         return {missingExists:!!missing,missingImg:!!missing?.querySelector('.product-img'),title:(missing?.querySelector('h3')?.textContent||'').trim(),price:(missing?.querySelector('.product-price')?.textContent||'').trim(),presentImg:!!img,imgLoaded:!!img&&img.complete&&img.naturalWidth>0,overflow:document.documentElement.scrollWidth-window.innerWidth};
       });
-      assert(m.missingExists,'Missing-photo item disappeared'); assert(!m.missingImg,'Missing-photo item rendered a broken image slot'); assert(m.title&&m.price,'Missing-photo item lost title or price'); assert(m.presentImg&&m.imgLoaded,'Neighbouring valid photo did not render'); assert(m.overflow<=1,'Mixed-photo layout overflowed');
+      assert(m.missingExists,'Missing-photo item disappeared'); assert(!m.missingImg,'Missing-photo item rendered a broken image slot'); assert(m.title&&m.price,'Missing-photo item lost title or price'); assert(m.presentImg===(layout!=='editorial'),`Valid-photo rendering mismatch in ${layout}`); assert(m.overflow<=1,'Mixed-photo layout overflowed');
     });
     await check(`${layout} category ${catStyle} mixed photos`, async()=>{
       const s=clone(baseState); clearPromotions(s); applyLayout(s,layout,defaults);
@@ -89,7 +94,7 @@ await verify('11.4', async check => {
         const first=items[0],second=items[1],img=second?.querySelector('.product-img');
         return {count:items.length,firstImg:!!first?.querySelector('.product-img'),firstTitle:(first?.querySelector('h3')?.textContent||'').trim(),firstPrice:(first?.querySelector('.product-price')?.textContent||'').trim(),secondImg:!!img,imgLoaded:!!img&&img.complete&&img.naturalWidth>0,featured:cat.classList.contains('is-featured'),overflow:document.documentElement.scrollWidth-window.innerWidth};
       });
-      assert(m.count>=2,'Mixed-photo category lost items'); assert(!m.firstImg,'Missing-photo category item rendered image slot'); assert(m.firstTitle&&m.firstPrice,'Missing-photo category item lost content'); assert(m.secondImg&&m.imgLoaded,'Valid mixed photo did not load'); assert(m.featured,'Category treatment disappeared'); assert(m.overflow<=1,'Category mixed-photo layout overflowed');
+      assert(m.count>=2,'Mixed-photo category lost items'); assert(!m.firstImg,'Missing-photo category item rendered image slot'); assert(m.firstTitle&&m.firstPrice,'Missing-photo category item lost content'); assert(m.secondImg===(layout!=='editorial'),`Mixed-photo rendering mismatch in ${layout}`); assert(m.featured,'Category treatment disappeared'); assert(m.overflow<=1,'Category mixed-photo layout overflowed');
     });
   }
 });
@@ -104,6 +109,7 @@ await verify('11.5', async check => {
       const item=findItem(s,'truffle-burger'); const cat=categories(s).find(c=>c.id==='desserts'); assert(item&&cat,'Currency fixtures missing');
       item.item.price=1250; item.item.variants=[]; item.item.promotion=itemPromotion(itemStyle); cat.promotion=categoryPromotion(catStyle);
       await seed(s,'/menu/sofra',{language:'English',displayCurrency:display}); await page.locator('.public-root').waitFor();
+      if(display==='EUR'){ await page.locator('[data-action="display-currency"]').click(); await page.locator('[data-action="set-display-currency"][data-code="EUR"]').click(); await page.locator('.public-root').waitFor(); }
       const m=await page.evaluate(()=>{
         const root=document.querySelector('.public-root'),item=document.querySelector('[data-item-id="truffle-burger"]'),cat=document.querySelector('#cat-desserts');
         const cs=getComputedStyle(root),price=item?.querySelector('.product-price-main')?.textContent?.trim()||'',approx=item?.querySelector('.product-price-approx')?.textContent?.trim()||'';
@@ -161,7 +167,7 @@ await verify('11.7', async check => {
   });
   await check('promotion Back + Expand + Cancel', async()=>{
     const s=clone(baseState); clearPromotions(s); const original=clone(findItem(s,'truffle-burger').item.promotion);
-    await seed(s,'/r/sofra/admin/menu/promotions/new'); await page.locator('[data-action="promotion-target"][data-id="truffle-burger"]').click();
+    await seed(s,'/r/sofra/admin/menu/promotions'); await page.locator('[data-action="promo-chooser"]').click(); await page.locator('[data-action="promotion-target"][data-id="truffle-burger"]').click();
     await page.locator('[data-action="promotion-step"][data-step="1"]').click();
     await page.locator('[data-action="promo-temp"][data-key="style"][data-value="ribbon"]').click();
     const input=page.locator('[data-action="promo-temp-input"][data-key="label"]'); await input.fill('Draft survives Back');
@@ -195,7 +201,7 @@ await verify('11.8', async check => {
   });
   await check('promotion failed save retains draft', async()=>{
     const s=clone(baseState); clearPromotions(s); const original=clone(findItem(s,'truffle-burger').item.promotion);
-    await seed(s,'/r/sofra/admin/menu/promotions/new'); await page.locator('[data-action="promotion-target"][data-id="truffle-burger"]').click();
+    await seed(s,'/r/sofra/admin/menu/promotions'); await page.locator('[data-action="promo-chooser"]').click(); await page.locator('[data-action="promotion-target"][data-id="truffle-burger"]').click();
     await page.locator('[data-action="promotion-step"][data-step="1"]').click(); await page.locator('[data-action="promo-temp"][data-key="style"][data-value="ribbon"]').click();
     await page.locator('[data-action="promo-temp-input"][data-key="label"]').fill('Failure draft label'); await page.locator('[data-action="promotion-step"][data-step="3"]').click();
     await breakRestaurantWrites(); await page.locator('[data-action="promotion-save"]').click();
@@ -262,7 +268,7 @@ await verify('11.10', async check => {
     const sheet=page.locator('.sheet'); await sheet.waitFor(); assert((await sheet.textContent()).includes('Grilled Octopus'),'Item-detail sheet has wrong content');
   });
   await check('admin item expand still works',async()=>{
-    const s=clone(baseState); await seed(s,'/r/sofra/admin/menu'); const row=page.locator('[data-action="expand-item"][data-id="octopus"]'); await row.scrollIntoViewIfNeeded(); await row.click();
+    const s=clone(baseState); await seed(s,'/r/sofra/admin/menu'); await page.locator('[data-action="jump-category"][data-id="mains"]').click(); const row=page.locator('[data-action="expand-item"][data-id="octopus"]'); await row.scrollIntoViewIfNeeded(); await row.click();
     assert(await row.getAttribute('aria-expanded')==='true','Admin item did not expand'); assert(await page.locator('.admin-item-wrap.is-open').filter({has:row}).count()===1,'Expanded admin item body missing');
   });
 });
