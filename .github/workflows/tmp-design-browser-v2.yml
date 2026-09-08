@@ -1,0 +1,46 @@
+name: Temporary Design browser verification v2
+
+on:
+  push:
+    branches:
+      - codex/design-single-screen-v2
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/design-single-screen-v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install project dependencies
+        run: npm install --ignore-scripts
+      - name: Install Playwright
+        run: npm install --no-save @playwright/test@1.55.0
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start HAP dev server
+        run: |
+          npm run dev -- --host 127.0.0.1 --port 4173 > /tmp/hap-dev.log 2>&1 &
+          echo $! > /tmp/hap-dev.pid
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:4173/r/sofra/admin/menu/design >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/hap-dev.log
+          exit 1
+      - name: Run Design browser verification
+        run: npx playwright test tmp/design_single_screen_v2.spec.cjs --reporter=line --workers=1
+      - name: Upload Design screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: design-single-screen-v2-screens
+          path: test-results/screens
+          if-no-files-found: warn
