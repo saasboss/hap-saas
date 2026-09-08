@@ -1877,12 +1877,12 @@ function subHead(title,eyebrow=''){ return `<div class="back-row"><button data-a
 /* Live miniature: the real guest-menu renderer drawn at full mobile width
    (390px) inside each card, then shrunk with transform: scale(). No fake
    skeleton — the card shows the actual template with real dishes. */
-function templatePreview(id){
- const a=state.appearance;
+function templatePreview(id,appearance){
+ const a=appearance||state.appearance;
  const cat=state.categories.find(c=>visibleItemsOf(c).length)||state.categories[0];
  const items=cat?visibleItemsOf(cat).slice(0,2):[];
- const themeClass=state.theme==='dark'?'dark-menu':'';
- return `<div class="preset-preview tpl-live"><div class="tpl-live-page public-root ${themeClass} template-${id} ${knobClasses(templateOf(id).defaults)}" style="${paletteVars({...a,palette:paletteFor(id,a)},state.theme==='dark')};transform:scale(.4)">
+ const themeClass=a.mode==='dark'?'dark-menu':'';
+ return `<div class="preset-preview tpl-live"><div class="tpl-live-page public-root ${themeClass} template-${id} ${knobClasses(templateOf(id).defaults)}" style="${paletteVars({...a,palette:paletteFor(id,a)},a.mode==='dark')};transform:scale(.4)">
   <div class="tpl-live-head"><b>${escapeHtml(state.restaurant.name)}</b><span>${cat?escapeHtml(tCategory(cat)):''}</span></div>
   <div class="product-list">${items.map((i,ii)=>renderPublicItem(i,cat,ii,{static:true})).join('')}</div>
  </div></div>`;
@@ -1961,11 +1961,11 @@ function refreshBackgroundCards(){
 }
 /* A real scaled .public-root mini-page, so a background card shows the actual
    pattern under the actual palette instead of a flat swatch. */
-function backgroundPreview(id){
- const a=state.appearance;
+function backgroundPreview(id,appearance){
+ const a=appearance||state.appearance;
  const cat=state.categories.find(c=>visibleItemsOf(c).length)||state.categories[0];
  const items=cat?visibleItemsOf(cat).slice(0,1):[];
- return `<div class="preset-preview tpl-live"><div class="tpl-live-page public-root ${state.theme==='dark'?'dark-menu':''} bg-${id} template-${a.template} ${knobClasses(a)}" style="${paletteVars(a,state.theme==='dark')};transform:scale(.4)">
+ return `<div class="preset-preview tpl-live"><div class="tpl-live-page public-root ${a.mode==='dark'?'dark-menu':''} bg-${id} template-${a.template} ${knobClasses(a)}" style="${paletteVars(a,a.mode==='dark')};transform:scale(.4)">
   <div class="tpl-live-head"><b>${escapeHtml(state.restaurant.name)}</b><span>${cat?escapeHtml(tCategory(cat)):''}</span></div>
   <div class="product-list">${items.map((i,ii)=>renderPublicItem(i,cat,ii,{static:true})).join('')}</div>
  </div></div>`;
@@ -2018,6 +2018,9 @@ function refreshDesignPreview(){
  if(preview) preview.innerHTML=sharedDraftPreview({appearance:d.appearance,limit:d.step===2||d.expanded?undefined:2,fullMenu:d.step===2||d.expanded});
  if(summary) summary.textContent=designSummary();
  document.querySelectorAll('[data-action="design-choice"]').forEach(el=>{const yes=String(d.appearance[el.dataset.key])===el.dataset.value;el.classList.toggle('selected',yes);el.setAttribute('aria-pressed',String(yes));});
+ document.querySelectorAll('[data-design-layout-preview]').forEach(holder=>{holder.innerHTML=templatePreview(holder.dataset.designLayoutPreview,d.appearance);});
+ document.querySelectorAll('[data-design-background-preview]').forEach(holder=>{holder.innerHTML=backgroundPreview(holder.dataset.designBackgroundPreview,d.appearance);});
+ requestAnimationFrame(scaleTemplatePreviews);
 }
 function updateDesignField(el){
  const d=designDraft(),key=el.dataset.designField;
@@ -2034,23 +2037,15 @@ function saveDesign(){
  ui.designDraft=null;toast('Design saved');render();
 }
 function appearancePage(){
- const d=designDraft(),a=d.appearance,steps=['Layout','Brand','Review'];
- const layout=`<h2>Choose your menu layout</h2><div class="wizard-choices">${['editorial','modern','grid'].map(id=>{const item=templateOf(id);return `<button type="button" class="wizard-choice ${a.template===id?'selected':''}" data-action="design-choice" data-key="template" data-value="${id}" aria-pressed="${a.template===id}"><strong>${item.name}${id==='modern'?' · Recommended':''}</strong><span>${item.sub}</span></button>`;}).join('')}</div>`;
- const brand=`<h2>Choose your brand</h2><div class="wizard-palette-grid">${PALETTES.map(p=>`<button type="button" class="palette-card ${a.palette===p.id?'selected':''}" data-action="design-choice" data-key="palette" data-value="${p.id}" aria-pressed="${a.palette===p.id}"><span class="palette-chip" style="--pc-brand:${p[a.mode].brand};--pc-accent:${p[a.mode].accent};--pc-bg:${p[a.mode].bg}"></span><strong>${escapeHtml(p.name)}</strong></button>`).join('')}</div><div class="segment-control">${['light','dark'].map(mode=>`<button type="button" class="${a.mode===mode?'selected':''}" data-action="design-choice" data-key="mode" data-value="${mode}" aria-pressed="${a.mode===mode}">${mode==='light'?'Light':'Dark'}</button>`).join('')}</div>
- <details><summary>More options</summary><div class="form-grid">
- <label class="field">Custom brand colour<input aria-label="Custom brand colour" type="color" data-design-field="brand" value="${escapeHtml(a.brand)}"></label>
- <label class="field">Background<select data-design-field="background">${backgrounds.map(([id,label])=>`<option value="${id}" ${a.background===id?'selected':''}>${label}</option>`).join('')}</select></label>
- <label class="field">Typography<select data-design-field="typography">${['mixed','serif','bold'].map(id=>`<option value="${id}" ${a.typography===id?'selected':''}>${id}</option>`).join('')}</select></label>
- <label class="field">Photo shape<select data-design-field="images">${[['soft','Soft corners'],['square','Square'],['none','No photos']].map(([id,label])=>`<option value="${id}" ${a.images===id?'selected':''}>${label}</option>`).join('')}</select></label>
- <label class="field">Card corners<select data-design-field="radius">${[['low','Subtle'],['medium','Rounded'],['high','Very rounded']].map(([id,label])=>`<option value="${id}" ${a.radius===id?'selected':''}>${label}</option>`).join('')}</select></label>
- <label class="checkbox-label"><input type="checkbox" data-design-field="thumbnails" ${a.thumbnails?'checked':''}> Show thumbnails in Essential</label></div></details>`;
+ const d=designDraft(),a=d.appearance;
+ const stepCopy=['Pick a layout for your menu','Choose colours and style','Review and save'];
+ const layout=`<h2>Pick a layout for your menu</h2><div class="wizard-choices wizard-layout-choices">${['editorial','modern','grid'].map(id=>{const item=templateOf(id);return `<button type="button" class="wizard-choice ${a.template===id?'selected':''}" data-action="design-choice" data-key="template" data-value="${id}" aria-pressed="${a.template===id}"><span class="wizard-layout-preview" data-design-layout-preview="${id}">${templatePreview(id,a)}</span><span class="wizard-choice-copy"><strong>${item.name}${id==='modern'?' · Recommended':''}</strong><span>${item.sub}</span></span></button>`;}).join('')}</div>`;
+ const backgroundChoices=`<div class="appearance-group wizard-background-group"><label>Background style</label><div class="preset-scroll background-scroll wizard-background-scroll">${backgrounds.map(([id,label])=>`<button type="button" class="preset wizard-background-card ${a.background===id?'selected':''}" data-action="design-choice" data-key="background" data-value="${id}" aria-pressed="${a.background===id}"><span class="wizard-background-preview" data-design-background-preview="${id}">${backgroundPreview(id,a)}</span><strong>${escapeHtml(label)}</strong></button>`).join('')}</div></div>`;
+ const fineTune=`<details><summary>Fine-tune</summary><div class="form-grid"><label class="field">Custom brand colour<input aria-label="Custom brand colour" type="color" data-design-field="brand" value="${escapeHtml(a.brand)}"></label><label class="field">Typography<select data-design-field="typography">${['mixed','serif','bold'].map(id=>`<option value="${id}" ${a.typography===id?'selected':''}>${id}</option>`).join('')}</select></label><label class="field">Photo shape<select data-design-field="images">${[['soft','Soft corners'],['square','Square'],['none','No photos']].map(([id,label])=>`<option value="${id}" ${a.images===id?'selected':''}>${label}</option>`).join('')}</select></label><label class="field">Card corners<select data-design-field="radius">${[['low','Subtle'],['medium','Rounded'],['high','Very rounded']].map(([id,label])=>`<option value="${id}" ${a.radius===id?'selected':''}>${label}</option>`).join('')}</select></label>${a.template==='editorial'?`<label class="checkbox-label"><input type="checkbox" data-design-field="thumbnails" ${a.thumbnails?'checked':''}> Show thumbnails in Essential</label>`:''}</div></details>`;
+ const brand=`<h2>Choose colours and style</h2><div class="wizard-palette-grid">${PALETTES.map(p=>`<button type="button" class="palette-card ${a.palette===p.id?'selected':''}" data-action="design-choice" data-key="palette" data-value="${p.id}" aria-pressed="${a.palette===p.id}"><span class="palette-chip" style="--pc-brand:${p[a.mode].brand};--pc-accent:${p[a.mode].accent};--pc-bg:${p[a.mode].bg}"></span><strong>${escapeHtml(p.name)}</strong></button>`).join('')}</div><div class="segment-control">${['light','dark'].map(mode=>`<button type="button" class="${a.mode===mode?'selected':''}" data-action="design-choice" data-key="mode" data-value="${mode}" aria-pressed="${a.mode===mode}">${mode==='light'?'Light':'Dark'}</button>`).join('')}</div>${backgroundChoices}${fineTune}`;
  const review=`<h2>Review your design</h2><p>Your menu content and prices stay the same.</p><div class="settings-list"><button type="button" class="btn" data-action="design-step" data-step="0">Edit layout</button><button type="button" class="btn" data-action="design-step" data-step="1">Edit brand</button></div>`;
- return `<div class="design-page wizard-page"><div class="page-head"><div><div class="eyebrow">Your menu</div><h1 class="page-title">Design</h1></div></div>
- <nav class="wizard-steps" aria-label="Design steps">${steps.map((s,i)=>`<button type="button" data-action="design-step" data-step="${i}" ${i===d.step?'aria-current="step"':''}>${i+1}. ${s}</button>`).join('')}</nav>
- <p id="design-summary" class="wizard-summary" aria-live="polite">${escapeHtml(designSummary())}</p>
- <div class="wizard-layout">${draftPreviewPanel(sharedDraftPreview({appearance:a,limit:d.step===2||d.expanded?undefined:2,fullMenu:d.step===2||d.expanded}),d.expanded)}
- <div class="wizard-form">${d.error?`<p class="promo-warn" role="alert">${escapeHtml(d.error)}</p>`:''}${[layout,brand,review][d.step]}
- <div class="wizard-actions"><button type="button" class="btn" data-action="design-cancel">Cancel</button>${d.step?`<button type="button" class="btn" data-action="design-step" data-step="${d.step-1}">Back</button>`:''}${d.step<2?`<button type="button" class="btn primary" data-action="design-step" data-step="${d.step+1}">Continue</button>`:'<button type="button" class="btn primary" data-action="design-save">Save design</button>'}</div></div></div></div>`;
+ const progressText=`Step ${d.step+1} of 3 — ${stepCopy[d.step]}`;
+ return `<div class="design-page wizard-page"><div class="page-head"><div><div class="eyebrow">Your menu</div><h1 class="page-title">Design</h1></div></div><div class="design-progress" role="progressbar" aria-valuemin="1" aria-valuemax="3" aria-valuenow="${d.step+1}" aria-valuetext="${escapeHtml(progressText)}"><span class="design-progress-track" aria-hidden="true"><i style="width:${((d.step+1)/3)*100}%"></i></span><p>${escapeHtml(progressText)}</p></div><p id="design-summary" class="wizard-summary" aria-live="polite">${escapeHtml(designSummary())}</p><div class="wizard-layout">${draftPreviewPanel(sharedDraftPreview({appearance:a,limit:d.step===2||d.expanded?undefined:2,fullMenu:d.step===2||d.expanded}),d.expanded)}<div class="wizard-form">${d.error?`<p class="promo-warn" role="alert">${escapeHtml(d.error)}</p>`:''}${[layout,brand,review][d.step]}<div class="wizard-actions"><button type="button" class="btn" data-action="design-cancel">Cancel</button>${d.step?`<button type="button" class="btn" data-action="design-step" data-step="${d.step-1}">Back</button>`:''}${d.step<2?`<button type="button" class="btn primary" data-action="design-step" data-step="${d.step+1}">Continue</button>`:'<button type="button" class="btn primary" data-action="design-save">Save design</button>'}</div></div></div></div>`;
 }
 
 /* ---------------- Billing ---------------- */

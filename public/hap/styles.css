@@ -1253,3 +1253,26 @@ button.signal-row>svg:last-child{color:var(--subtle);flex:none}
 .cat-rename input{flex:1;min-width:0;min-height:40px;padding:0 10px;border:1px solid var(--brand);border-radius:10px;background:var(--surface);font-size:14px;font-weight:850;color:var(--text)}
 .cat-star{width:44px;height:44px;border-radius:14px;color:var(--muted)}
 .cat-star.on{color:var(--brand)}
+
+/* --- Design wizard clarity: visual choices without changing persistence --- */
+.design-progress{display:grid;gap:8px;margin:0}
+.design-progress-track{display:block;width:100%;height:4px;overflow:hidden;border-radius:999px;background:var(--surface-2)}
+.design-progress-track i{display:block;height:100%;border-radius:inherit;background:var(--brand);transition:width .18s var(--ease)}
+.design-progress p{margin:0;font-size:12px;font-weight:800;color:var(--muted);line-height:1.35}
+.wizard-layout-choices{gap:10px}
+.wizard-layout-choices .wizard-choice{min-height:0;padding:8px;gap:9px;overflow:hidden}
+.wizard-layout-preview{display:block;width:100%;height:120px;overflow:hidden;border-radius:10px;background:var(--surface-2)}
+.wizard-layout-preview .preset-preview.tpl-live{height:120px;aspect-ratio:auto;margin:0;border-radius:10px}
+.wizard-choice-copy{display:block;padding:1px 4px 4px;min-width:0}
+.wizard-choice-copy>strong{display:block;font-size:13px;line-height:1.25}
+.wizard-choice-copy>span{display:block;margin-top:3px;font-size:11px;line-height:1.35;color:var(--muted)}
+.design-page .segment-control button.selected{background:var(--surface);color:var(--text);box-shadow:0 3px 10px rgba(0,0,0,.08)}
+.wizard-background-group{margin-top:16px!important}
+.wizard-background-scroll{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain;scroll-snap-type:x proximity;padding:1px 1px 5px}
+.wizard-background-scroll::-webkit-scrollbar{display:none}
+.wizard-background-card{flex:0 0 144px;min-height:0;padding:7px;scroll-snap-align:start;text-align:left}
+.wizard-background-card>strong{display:block;padding:7px 3px 3px;font-size:11px;line-height:1.25}
+.wizard-background-preview{display:block;width:100%;height:88px;overflow:hidden;border-radius:9px;background:var(--surface-2)}
+.wizard-background-preview .preset-preview.tpl-live{height:88px;aspect-ratio:auto;margin:0;border-radius:9px}
+.wizard-form details>summary{min-height:44px;display:flex;align-items:center}
+@media(prefers-reduced-motion:reduce){.design-progress-track i{transition:none}.wizard-background-scroll{scroll-snap-type:none}}
