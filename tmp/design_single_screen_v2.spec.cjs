@@ -32,7 +32,7 @@ for (const width of widths) {
     await expect(design.locator('.design-disclosure')).toHaveCount(3);
     await expect(design.locator('.design-disclosure[open]')).toHaveCount(0);
 
-    // The default editor should fit in one screen or require only a short scroll.
+    // The default editor should require only a short scroll and never horizontal overflow.
     const geometry = await page.evaluate(() => {
       const scroll = document.querySelector('.content-scroll');
       const root = document.querySelector('.design-compact-page');
@@ -44,7 +44,7 @@ for (const width of widths) {
       };
     });
     expect(geometry.extraScroll).not.toBeNull();
-    expect(geometry.extraScroll).toBeLessThanOrEqual(width < 700 ? 320 : 180);
+    expect(geometry.extraScroll).toBeLessThanOrEqual(320);
     expect(geometry.scrollX).toBeLessThanOrEqual(1);
     expect(geometry.documentX).toBeLessThanOrEqual(1);
     expect(geometry.rootX).toBeLessThanOrEqual(1);
@@ -67,12 +67,12 @@ for (const width of widths) {
     await design.locator('.design-layout-option[data-value="editorial"]').click();
     await expect(design.locator('#design-layout-current')).toHaveText('Essential');
     await expect(design.locator('.draft-menu')).toHaveClass(/template-editorial/);
-    await expect(design.locator('[data-essential-only]')).toBeVisible();
+    expect(await design.locator('[data-essential-only]').evaluate((el) => el.hidden)).toBe(false);
 
     await design.locator('.design-layout-option[data-value="grid"]').click();
     await expect(design.locator('#design-layout-current')).toHaveText('Gallery');
     await expect(design.locator('.draft-menu')).toHaveClass(/template-grid/);
-    await expect(design.locator('[data-essential-only]')).toBeHidden();
+    expect(await design.locator('[data-essential-only]').evaluate((el) => el.hidden)).toBe(true);
 
     // Secondary controls stay behind disclosures and update the same preview.
     const brand = design.locator('.design-disclosure').filter({ has: page.getByText('Brand', { exact: true }) });
