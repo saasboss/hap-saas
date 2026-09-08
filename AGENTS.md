@@ -125,6 +125,9 @@ Every failed test, workflow, patch, or verification attempt must improve the nex
 10. **Sequential writes only.** Use current blob SHAs and one write path at a time for a file/ref.
 11. **Temporary tooling stays temporary.** Remove debug workflows, patch scripts, Playwright harnesses, and artifacts before the final PR unless deliberately adopting them as maintained tests.
 12. **Final diff is the gate.** Compare the branch to `main` before PR/merge and confirm only intended product/docs changes remain.
+13. **Selectors must be unique and user-real.** Scope browser selectors to the intended container/control or prefer role + visible label when the same `data-action` appears in navigation and action buttons. Strict-selector ambiguity is a fixture bug, not a reason to weaken strict mode.
+14. **Automation must be idempotent.** Re-running a patch or migration on an already-correct branch must produce no additional diff. Never use a matcher where the old text remains embedded inside the replacement without checking for the completed state first.
+15. **Wait for observable state, not arbitrary sleeps.** Prefer an element state, route, persisted value, animation-frame boundary, or other deterministic condition over fixed `waitForTimeout` delays.
 
 Project-specific lessons already learned: `/r/:slug/admin/menu/promotions` is canonical; do not invent `/menu/promotions/new`. Essential may intentionally suppress photos. Do not require immediate `naturalWidth` for lazy images. Do not guess guest language/currency state instead of using the product's real interaction/storage contract. Do not embed complicated Python patching inside GitHub Actions YAML.
 

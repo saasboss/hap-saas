@@ -52,6 +52,7 @@ async function seed(state,path='/menu/sofra',guest={language:'English'}) {
     const language=guest?.language||'English';
     const gate=page.locator(`[data-action="select-language"][data-lang="${language}"]`);
     if(await gate.count()) { try { await gate.click({timeout:1500}); } catch {} }
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   }
 }
 async function persisted() {
@@ -109,7 +110,6 @@ await verify('11.5', async check => {
       const item=findItem(s,'truffle-burger'); const cat=categories(s).find(c=>c.id==='desserts'); assert(item&&cat,'Currency fixtures missing');
       item.item.price=1250; item.item.variants=[]; item.item.promotion=itemPromotion(itemStyle); cat.promotion=categoryPromotion(catStyle);
       await seed(s,'/menu/sofra',{language:'English',displayCurrency:display}); await page.locator('.public-root').waitFor();
-      if(display==='EUR'){ await page.locator('[data-action="display-currency"]').click(); await page.locator('[data-action="set-display-currency"][data-code="EUR"]').click(); await page.locator('.public-root').waitFor(); }
       if(display==='EUR'){ await page.locator('[data-action="display-currency"]').click(); await page.locator('[data-action="set-display-currency"][data-code="EUR"]').click(); await page.locator('.public-root').waitFor(); }
       const m=await page.evaluate(()=>{
         const root=document.querySelector('.public-root'),item=document.querySelector('[data-item-id="truffle-burger"]'),cat=document.querySelector('#cat-desserts');
@@ -169,10 +169,10 @@ await verify('11.7', async check => {
   await check('promotion Back + Expand + Cancel', async()=>{
     const s=clone(baseState); clearPromotions(s); const original=clone(findItem(s,'truffle-burger').item.promotion);
     await seed(s,'/r/sofra/admin/menu/promotions'); await page.locator('[data-action="promo-chooser"]').click(); await page.locator('[data-action="promotion-target"][data-id="truffle-burger"]').click();
-    await page.locator('[data-action="promotion-step"][data-step="1"]').click();
+    await page.getByRole('button',{name:'Continue',exact:true}).click();
     await page.locator('[data-action="promo-temp"][data-key="style"][data-value="ribbon"]').click();
     const input=page.locator('[data-action="promo-temp-input"][data-key="label"]'); await input.fill('Draft survives Back');
-    await page.locator('[data-action="promotion-step"][data-step="2"]').click(); await page.locator('[data-action="promotion-step"][data-step="1"]').click();
+    await page.getByRole('button',{name:'Continue',exact:true}).click(); await page.getByRole('button',{name:'Back',exact:true}).click();
     assert(await input.inputValue()==='Draft survives Back','Promotion draft lost on Back');
     const expand=page.locator('[data-action="expand-draft-preview"]'); await expand.click(); assert(await expand.getAttribute('aria-expanded')==='true','Promotion preview did not expand');
     await page.locator('[data-action="close-sheet"]').click();
@@ -203,8 +203,8 @@ await verify('11.8', async check => {
   await check('promotion failed save retains draft', async()=>{
     const s=clone(baseState); clearPromotions(s); const original=clone(findItem(s,'truffle-burger').item.promotion);
     await seed(s,'/r/sofra/admin/menu/promotions'); await page.locator('[data-action="promo-chooser"]').click(); await page.locator('[data-action="promotion-target"][data-id="truffle-burger"]').click();
-    await page.locator('[data-action="promotion-step"][data-step="1"]').click(); await page.locator('[data-action="promo-temp"][data-key="style"][data-value="ribbon"]').click();
-    await page.locator('[data-action="promo-temp-input"][data-key="label"]').fill('Failure draft label'); await page.locator('[data-action="promotion-step"][data-step="3"]').click();
+    await page.getByRole('button',{name:'Continue',exact:true}).click(); await page.locator('[data-action="promo-temp"][data-key="style"][data-value="ribbon"]').click();
+    await page.locator('[data-action="promo-temp-input"][data-key="label"]').fill('Failure draft label'); await page.getByRole('button',{name:'Continue',exact:true}).click(); await page.getByRole('button',{name:'Continue',exact:true}).click();
     await breakRestaurantWrites(); await page.locator('[data-action="promotion-save"]').click();
     const warn=page.locator('.promo-warn[role="alert"]'); await warn.waitFor(); assert((await warn.textContent()).trim().length>0,'No promotion save error shown');
     assert((await page.locator('#promotion-summary').textContent()).includes('Failure draft label'),'Promotion draft summary lost after failed save');
@@ -257,7 +257,7 @@ await verify('11.10', async check => {
   });
   await check('public search and dietary filter',async()=>{
     const s=clone(baseState); await seed(s); await page.locator('#public-search-input').fill('Octopus');
-    await page.waitForTimeout(80);
+    await page.locator('[data-item-id="truffle-burger"]').waitFor({state:'hidden'});
     const search=await page.evaluate(()=>[...document.querySelectorAll('.menu-product')].filter(el=>getComputedStyle(el).display!=='none').map(el=>el.dataset.itemId));
     assert(search.length===1&&search[0]==='octopus',`Search result wrong: ${JSON.stringify(search)}`);
     await page.locator('#public-search-input').fill(''); await page.locator('[data-action="filters-sheet"]').click(); await page.locator('[data-action="diet-toggle"][data-diet="vegetarian"]').click(); await page.locator('[data-action="filters-apply"]').click();
@@ -269,7 +269,7 @@ await verify('11.10', async check => {
     const sheet=page.locator('.sheet'); await sheet.waitFor(); assert((await sheet.textContent()).includes('Grilled Octopus'),'Item-detail sheet has wrong content');
   });
   await check('admin item expand still works',async()=>{
-    const s=clone(baseState); await seed(s,'/r/sofra/admin/menu'); await page.locator('[data-action="jump-category"][data-id="mains"]').click(); const row=page.locator('[data-action="expand-item"][data-id="octopus"]'); await row.scrollIntoViewIfNeeded(); await row.click();
+    const s=clone(baseState); await seed(s,'/r/sofra/admin/menu'); const row=page.locator('[data-action="expand-item"][data-id="truffle-burger"]'); await row.scrollIntoViewIfNeeded(); await row.click();
     assert(await row.getAttribute('aria-expanded')==='true','Admin item did not expand'); assert(await page.locator('.admin-item-wrap.is-open').filter({has:row}).count()===1,'Expanded admin item body missing');
   });
 });
