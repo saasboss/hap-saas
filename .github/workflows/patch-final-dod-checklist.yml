@@ -1,0 +1,30 @@
+name: Apply final DoD checklist evidence
+
+on:
+  push:
+    branches:
+      - codex/menu-promo-dod-final
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply checklist evidence
+        run: python scripts/patch-final-dod-checklist.py
+      - name: Verify intended documentation diff
+        run: git diff --check -- docs/MENU_DESIGN_PROMOTION_PLAN.md
+      - name: Commit checklist evidence
+        run: |
+          if git diff --quiet -- docs/MENU_DESIGN_PROMOTION_PLAN.md; then
+            echo "Checklist already current"
+            exit 0
+          fi
+          git config user.name "saasboss"
+          git config user.email "businesstidra@gmail.com"
+          git add docs/MENU_DESIGN_PROMOTION_PLAN.md
+          git commit -m "docs: complete menu promotion definition of done"
+          git push origin HEAD:codex/menu-promo-dod-final
