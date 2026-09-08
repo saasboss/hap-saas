@@ -69,28 +69,29 @@ Use the lowest tier that is safe for the task; see `docs/MODEL_ROUTING.md`.
 - Do not burn credits through repeated blind retries.
 - Never weaken tests or safety checks merely to make a task pass.
 
-## Mandatory Product Design preflight for UI/UX
+## Mandatory design preflight for UI/UX
 
-Every task that materially changes what a user sees or how they interact must use the Product Design plugin **before implementation begins**. This includes redesigns, layouts, navigation, interaction patterns, component styling, visual hierarchy, responsive fixes, menu presentation, promotions presentation, admin flows, onboarding, forms, sheets, and visual states.
+Every task that materially changes what a user sees or how they interact must complete a design preflight **before implementation begins**. This includes redesigns, layouts, navigation, interaction patterns, component styling, visual hierarchy, responsive fixes, menu presentation, promotions presentation, admin flows, onboarding, forms, sheets, and visual states.
 
 Required order:
 
 1. Inspect the current implementation, relevant route, components/styles, state, and existing behavior.
-2. Run the specific UI/UX task through Product Design to audit the current experience and propose the strongest direction.
-3. Treat Product Design output as design input, not automatically-correct instructions.
-4. Critically compare it with HAP's existing architecture, canonical flows, product scope, friction goals, and established design language.
-5. Reject stale, duplicate, low-value, or architecture-breaking suggestions.
-6. Lock the smallest approved UI/UX scope and acceptance criteria.
-7. Only then write or modify implementation code.
-8. Run the full UI/UX implementation quality gate below before push or merge.
+2. Use Product Design when it is available in the current environment.
+3. If Product Design is unavailable, use UX Pilot as the approved fallback and generate a visual or flow direction before implementation.
+4. Treat Product Design/UX Pilot output as design input, not automatically-correct instructions.
+5. Critically compare the output with HAP's existing architecture, canonical flows, product scope, friction goals, established design language, supported mobile widths, and maintainability requirements.
+6. Reject stale, duplicate, generic, low-value, or architecture-breaking suggestions.
+7. Lock the smallest approved UI/UX scope and acceptance criteria.
+8. Only then write or modify implementation code.
+9. Run the full UI/UX implementation quality gate below before push or merge.
 
-Do not skip Product Design because a change looks small, obvious, urgent, already has a screenshot/mockup, or was suggested by Claude, Lovable, Codex, ChatGPT, or another AI. If Product Design is unavailable, stop the UI implementation and report the blocker rather than silently proceeding without the preflight.
+Do not skip the design preflight because a change looks small, obvious, urgent, already has a screenshot/mockup, or was suggested by Claude, Lovable, Codex, ChatGPT, or another AI. If neither Product Design nor UX Pilot is available, stop the UI implementation and report the blocker rather than silently proceeding without a preflight.
 
-Purely non-visual work — documentation-only changes, backend-only work, CI/configuration, security-only fixes, or data migrations — does not require Product Design unless it also materially changes UI/UX.
+Purely non-visual work — documentation-only changes, backend-only work, CI/configuration, security-only fixes, or data migrations — does not require a design preflight unless it also materially changes UI/UX.
 
 ## UI/UX implementation quality gate
 
-Product Design, screenshots, Lovable output, generated prototypes, and AI suggestions are design input only. They do not lower the engineering standard required for code entering this repository.
+Product Design, UX Pilot, screenshots, Lovable output, generated prototypes, and AI suggestions are design input only. They do not lower the engineering standard required for code entering this repository.
 
 Before any UI/UX implementation is pushed or merged, it must pass all of the following:
 
