@@ -24,7 +24,7 @@ Before planning or editing, read:
 5. `docs/MENU_DESIGN_PROMOTION_PLAN.md` — the living checklist for menu design and
    promotion work. Do the first unchecked box, tick it when done, and append a dated
    line to its progress log. Never re-audit or redo checked items.
-5. The active pull request and current task or handoff, if one exists
+6. The active pull request and current task or handoff, if one exists
 
 If these documents conflict, this file wins. Ask the user only when a decision would materially change the product, security, cost, or scope.
 
@@ -68,6 +68,25 @@ Use the lowest tier that is safe for the task; see `docs/MODEL_ROUTING.md`.
 - Give Economy or Standard one serious attempt. If evidence shows the task is beyond it, save a checkpoint and escalate one tier.
 - Do not burn credits through repeated blind retries.
 - Never weaken tests or safety checks merely to make a task pass.
+
+## Mandatory Product Design preflight for UI/UX
+
+Every task that materially changes what a user sees or how they interact must use the Product Design plugin **before implementation begins**. This includes redesigns, layouts, navigation, interaction patterns, component styling, visual hierarchy, responsive fixes, menu presentation, promotions presentation, admin flows, onboarding, forms, sheets, and visual states.
+
+Required order:
+
+1. Inspect the current implementation, relevant route, components/styles, state, and existing behavior.
+2. Run the specific UI/UX task through Product Design to audit the current experience and propose the strongest direction.
+3. Treat Product Design output as design input, not automatically-correct instructions.
+4. Critically compare it with HAP's existing architecture, canonical flows, product scope, friction goals, and established design language.
+5. Reject stale, duplicate, low-value, or architecture-breaking suggestions.
+6. Lock the smallest approved UI/UX scope and acceptance criteria.
+7. Only then write or modify implementation code.
+8. Run the full UI/UX implementation quality gate below before push or merge.
+
+Do not skip Product Design because a change looks small, obvious, urgent, already has a screenshot/mockup, or was suggested by Claude, Lovable, Codex, ChatGPT, or another AI. If Product Design is unavailable, stop the UI implementation and report the blocker rather than silently proceeding without the preflight.
+
+Purely non-visual work — documentation-only changes, backend-only work, CI/configuration, security-only fixes, or data migrations — does not require Product Design unless it also materially changes UI/UX.
 
 ## UI/UX implementation quality gate
 
