@@ -69,6 +69,26 @@ Use the lowest tier that is safe for the task; see `docs/MODEL_ROUTING.md`.
 - Do not burn credits through repeated blind retries.
 - Never weaken tests or safety checks merely to make a task pass.
 
+## UI/UX implementation quality gate
+
+Product Design, screenshots, Lovable output, generated prototypes, and AI suggestions are design input only. They do not lower the engineering standard required for code entering this repository.
+
+Before any UI/UX implementation is pushed or merged, it must pass all of the following:
+
+1. **Reuse before invention.** Inspect the existing route, component, styling, interaction, and state patterns first. Reuse or extend existing components and utilities where they fit. Do not create a parallel design system, duplicate route logic, or another version of an existing control to save time.
+2. **Smallest safe change.** Change only what is needed for the approved UI/UX outcome. Do not rewrite working architecture, convert unrelated files, introduce broad global CSS, or add dependencies for styling or interactions that the current stack can already handle.
+3. **No prototype shortcuts in production paths.** Reject hardcoded behavior that should use existing state, fake interactions, placeholder logic, dead controls, duplicated demo state, copied markup with no reuse path, or visual-only implementations that break the existing flow.
+4. **No generated-code sludge.** Reject unnecessarily monolithic components, excessive wrapper markup, giant inline-style objects, unexplained magic numbers, duplicated CSS blocks, cascading `!important` patches, brittle absolute positioning, dead code, unused abstractions, or one-off hacks that merely make a screenshot look correct.
+5. **Architecture stays coherent.** Follow the existing React/TanStack/Tailwind/shadcn/Radix patterns and the repository's established ownership boundaries. Prefer existing primitives over raw custom replacements unless there is a documented reason.
+6. **Responsive behavior is proven.** Phase 1 UI changes must be checked at 320px, 390px, and 430px. Check 700px+ for regressions when the changed surface is visible there. No horizontal overflow, clipped labels, overlapping content, inaccessible controls, or interaction targets that become unusable at supported widths.
+7. **Interaction quality matters, not just appearance.** Verify loading/disabled/selected/open/closed/error/empty states when relevant. Preserve keyboard behavior, focus visibility, semantic labels, readable contrast, and minimum practical touch targets. A pretty screenshot is not proof of a good implementation.
+8. **Design intent must survive real content.** Test long labels, long item names, price variations, empty descriptions, promoted states, and other realistic content that could break the layout. Do not optimize only for the sample text shown in a mockup.
+9. **No silent scope expansion.** A UI task must not introduce backend, auth, billing, data-model, tenancy, analytics, or permissions behavior unless separately approved.
+10. **Evidence before push.** Inspect the complete diff, run `npm run build` and the relevant lint/tests, and visually verify the affected screens. If a claim such as “fixed on mobile” or “no overlap” matters, provide direct evidence appropriate to that claim.
+11. **Challenge the finished implementation.** Before declaring the task complete, actively look for the easiest ways it could fail: another viewport, longer content, another state, another route, regressions from shared CSS, duplicated logic, or unnecessary complexity. Fix material issues before requesting merge.
+
+If an implementation looks correct but fails any rule above, it is not ready to push or merge. Prefer a smaller, maintainable implementation over a faster AI-generated one.
+
 ## High-risk gate
 
 For authentication, authorization, payments, database schema or migrations, secrets, production infrastructure, dependency upgrades with breaking changes, destructive operations, or security controls:
