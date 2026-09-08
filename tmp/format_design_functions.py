@@ -14,8 +14,8 @@ proc = subprocess.run(
 formatted = proc.stdout
 
 patterns = [
-    (r'function refreshDesignPreview\(\).*?(?=\nfunction updateDesignField)', 'refreshDesignPreview'),
-    (r'function appearancePage\(\).*?(?=\n/\* ---------------- Billing)', 'appearancePage'),
+    (r'function refreshDesignPreview\(\).*?(?=\n\s*function updateDesignField)', 'refreshDesignPreview'),
+    (r'function appearancePage\(\).*?(?=\n\s*/\* ---------------- Billing)', 'appearancePage'),
 ]
 
 for pattern, name in patterns:
@@ -23,7 +23,7 @@ for pattern, name in patterns:
     formatted_match = re.search(pattern, formatted, flags=re.S)
     if not source_match or not formatted_match:
         raise SystemExit(f'Could not isolate {name}')
-    current = current[:source_match.start()] + formatted_match.group(0) + current[source_match.end():]
+    current = current[:source_match.start()] + formatted_match.group(0).rstrip() + '\n' + current[source_match.end():].lstrip('\n')
 
 path.write_text(current)
 print('Formatted only the changed Design functions')
