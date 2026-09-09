@@ -2068,7 +2068,7 @@ function saveDesign(){
       (backgrounds.find(([id]) => id === a.background) || [, a.background])[1] || a.background;
     const layoutIcons = { editorial: "menu", modern: "image", grid: "grid" };
     const layout = `<section class="design-section design-layout-section" aria-labelledby="design-layout-title">
-  <div class="design-section-head"><div><span class="design-section-kicker">Layout</span><strong id="design-layout-title">Choose the structure</strong></div><small id="design-layout-current">${escapeHtml(currentLayout.name)}</small></div>
+  <div class="design-section-head"><strong id="design-layout-title">Layout</strong><small id="design-layout-current">${escapeHtml(currentLayout.name)}</small></div>
   <div class="design-layout-grid" role="group" aria-label="Menu layout">${[
     "editorial",
     "modern",
@@ -2129,13 +2129,13 @@ function saveDesign(){
   </div></div>
  </details>`;
     return `<div class="design-page design-compact-page">
-  <div class="page-head design-page-head"><div><div class="eyebrow">Your menu</div><h1 class="page-title">Design</h1><p class="page-subtitle">One preview. Change the look without changing your menu.</p></div></div>
+  <div class="page-head design-page-head"><div><h1 class="page-title">Design</h1><p class="page-subtitle">Preview updates instantly.</p></div></div>
   <p id="design-summary" class="wizard-summary design-summary" aria-live="polite">${escapeHtml(designSummary())}</p>
-  ${draftPreviewPanel(sharedDraftPreview({ appearance: a, limit: d.expanded ? undefined : 2, fullMenu: d.expanded }), d.expanded)}
+  ${draftPreviewPanel(sharedDraftPreview({ appearance: a, limit: d.expanded ? undefined : 1, fullMenu: d.expanded }), d.expanded)}
   ${d.error ? `<p class="promo-warn design-error" role="alert">${escapeHtml(d.error)}</p>` : ""}
   ${layout}
   <div class="design-disclosures">${brand}${background}${fineTune}</div>
-  <div class="design-savebar"><button type="button" class="btn" data-action="design-cancel">Cancel</button><button type="button" class="btn primary" data-action="design-save">Save design</button><span>Changes go live only after Save.</span></div>
+  <div class="design-savebar"><button type="button" class="btn" data-action="design-cancel">Cancel</button><button type="button" class="btn primary" data-action="design-save">Save design</button></div>
  </div>`;
   }
 /* ---------------- Billing ---------------- */
