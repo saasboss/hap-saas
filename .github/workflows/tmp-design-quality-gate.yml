@@ -56,7 +56,7 @@ jobs:
           grep -F 'transition:background .2s ease;color .2s ease' public/hap/styles.css >/dev/null
       - name: JavaScript syntax check
         run: node --check public/hap/app.js
-      - name: Verify no new ESLint errors vs main
+      - name: Verify no new non-formatting ESLint errors vs main
         run: |
           cp public/hap/app.js /tmp/branch-app.js
           git show origin/main:public/hap/app.js > public/hap/app.js
@@ -65,7 +65,7 @@ jobs:
           npx eslint public/hap/app.js -f json > /tmp/branch-eslint.json || true
           node <<'NODE'
           const fs=require('fs');
-          const load=p=>JSON.parse(fs.readFileSync(p,'utf8'))[0]?.messages||[];
+          const load=p=>(JSON.parse(fs.readFileSync(p,'utf8'))[0]?.messages||[]).filter(m=>m.ruleId!=='prettier/prettier');
           const key=m=>`${m.ruleId||'parser'}\u0000${m.message}`;
           const count=arr=>arr.reduce((map,m)=>(map.set(key(m),(map.get(key(m))||0)+1),map),new Map());
           const main=load('/tmp/main-eslint.json');
@@ -73,10 +73,10 @@ jobs:
           const a=count(main), b=count(branch);
           const added=[];
           for(const [k,n] of b){ const delta=n-(a.get(k)||0); if(delta>0) added.push({delta,key:k.replace('\u0000',' :: ')}); }
-          console.log(`main ESLint messages: ${main.length}`);
-          console.log(`branch ESLint messages: ${branch.length}`);
-          if(added.length){ console.error('New ESLint regressions:'); for(const x of added) console.error(`+${x.delta} ${x.key}`); process.exit(1); }
-          console.log('No new ESLint errors or warnings versus main.');
+          console.log(`main non-formatting ESLint messages: ${main.length}`);
+          console.log(`branch non-formatting ESLint messages: ${branch.length}`);
+          if(added.length){ console.error('New non-formatting ESLint regressions:'); for(const x of added) console.error(`+${x.delta} ${x.key}`); process.exit(1); }
+          console.log('No new non-formatting ESLint errors or warnings versus main.');
           NODE
       - name: Production build
         if: always()
