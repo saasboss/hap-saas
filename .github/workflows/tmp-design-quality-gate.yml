@@ -1,0 +1,39 @@
+name: Temporary Design delivery quality gate
+
+on:
+  push:
+    branches:
+      - codex/design-single-screen-v2
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/design-single-screen-v2
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --ignore-scripts
+      - name: Verify exact branch scope
+        run: |
+          git fetch origin main
+          files="$(git diff --name-only origin/main...HEAD)"
+          printf '%s\n' "$files"
+          test "$files" = $'public/hap/app.js\npublic/hap/styles.css\n.github/workflows/tmp-design-quality-gate.yml' || \
+          test "$files" = $'.github/workflows/tmp-design-quality-gate.yml\npublic/hap/app.js\npublic/hap/styles.css'
+      - name: Diff whitespace check
+        run: git diff --check origin/main...HEAD
+      - name: Prettier check changed product files
+        run: npx prettier --check public/hap/app.js public/hap/styles.css
+      - name: ESLint changed JavaScript
+        run: npx eslint public/hap/app.js
+      - name: Production build
+        run: npm run build
