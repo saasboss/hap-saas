@@ -1,0 +1,46 @@
+name: Temporary Design density browser verification
+
+on:
+  push:
+    branches:
+      - codex/design-density-finetune
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/design-density-finetune
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --ignore-scripts
+      - name: Install Playwright
+        run: npm install --no-save @playwright/test@1.55.0
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start HAP dev server
+        run: |
+          npm run dev -- --host 127.0.0.1 --port 4173 > /tmp/hap-dev.log 2>&1 &
+          echo $! > /tmp/hap-dev.pid
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:4173/r/sofra/admin/menu/design >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/hap-dev.log
+          exit 1
+      - name: Run Design density verification
+        run: npx playwright test tmp/design_density.spec.cjs --reporter=line --workers=1
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: design-density-screens
+          path: test-results/design-density-*.png
+          if-no-files-found: warn
