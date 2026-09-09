@@ -1401,3 +1401,48 @@ button.signal-row>svg:last-child{color:var(--subtle);flex:none}
 .design-savebar .btn{min-height:44px}.design-savebar span{grid-column:1/-1;text-align:center;color:var(--muted);font-size:9px;line-height:1.2}
 @media(max-width:340px){.design-layout-option{min-height:78px;padding-inline:3px}.design-layout-option strong{font-size:10px}.design-section{padding:9px}.design-fine-grid{grid-template-columns:1fr}.design-essential-option{grid-column:1}.design-background-option{font-size:9px}}
 @media(prefers-reduced-motion:reduce){.design-disclosure>summary>svg{transition:none}.design-palette-strip{scroll-snap-type:none}}
+
+/* ===================== Promotion treatments: Ticket + Chef's pick fold =====================
+   Both are visual modifiers of the existing .menu-product card: same grid
+   (image | copy | price), same price markup, same 2-line clamps. The label is
+   an in-flow eyebrow spanning the full width, so it can never overlap a title.
+   Only the ticket notches and the corner fold are absolutely positioned. */
+.menu-product.promo-style-ticket,
+.menu-product.promo-style-premiumFold{overflow:hidden;box-sizing:border-box;row-gap:0}
+.promo-eyebrow{grid-column:1/-1;order:-1;min-width:0;margin-bottom:7px;font-size:9px;line-height:1.3;font-weight:900;letter-spacing:.13em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.menu-product.promo-style-ticket .product-copy h3,
+.menu-product.promo-style-premiumFold .product-copy h3{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* price column: reserved, restrained width — never poster scale */
+.menu-product.promo-style-ticket .product-price,
+.menu-product.promo-style-premiumFold .product-price{align-self:center;max-width:88px;min-width:0;padding-left:10px;margin-top:0;white-space:normal}
+.menu-product.promo-style-ticket .product-price-main,
+.menu-product.promo-style-premiumFold .product-price-main{font-size:16px}
+
+/* --- Ticket --- */
+.menu-product.promo-style-ticket{--ticket-red:#b63c28;border:1px dashed var(--ticket-red);background:color-mix(in srgb,#f8ecda 62%,var(--menu-surface));border-radius:14px;box-shadow:0 8px 20px rgba(86,55,35,.07)}
+.menu-product.promo-style-ticket .promo-eyebrow{color:var(--ticket-red)}
+.menu-product.promo-style-ticket .product-price{border-left:1px dashed color-mix(in srgb,var(--ticket-red) 55%,transparent);color:var(--ticket-red)}
+.menu-product.promo-style-ticket .product-price-was{color:color-mix(in srgb,var(--ticket-red) 55%,var(--menu-muted))}
+/* decorative edge notches — clipped by the card, so they add no width */
+.menu-product.promo-style-ticket:before,
+.menu-product.promo-style-ticket:after{content:"";position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:var(--menu-bg);border:1px dashed var(--ticket-red);transform:translateY(-50%);pointer-events:none;z-index:2}
+.menu-product.promo-style-ticket:before{left:-8px}
+.menu-product.promo-style-ticket:after{right:-8px}
+
+/* --- Chef's pick, folded corner --- */
+.menu-product.promo-style-premiumFold{--fold-green:#0d3a29;--fold-gold:#e3bd63;border:1px solid color-mix(in srgb,var(--fold-gold) 60%,transparent);border-radius:16px;background:linear-gradient(150deg,#154b37,var(--fold-green) 62%);box-shadow:inset 0 0 0 3px rgba(227,189,99,.14),0 10px 26px rgba(9,32,23,.22)}
+.menu-product.promo-style-premiumFold .promo-eyebrow{color:var(--fold-gold);padding-right:52px}
+.menu-product.promo-style-premiumFold .product-copy h3{color:#fdfaf3}
+.menu-product.promo-style-premiumFold .product-copy p{color:rgba(253,250,243,.74)}
+.menu-product.promo-style-premiumFold .badge-pill{color:rgba(253,250,243,.82);background:rgba(253,250,243,.12)}
+.menu-product.promo-style-premiumFold .product-price{border-left:1px solid rgba(227,189,99,.32);color:var(--fold-gold)}
+.menu-product.promo-style-premiumFold .product-price-was{color:rgba(253,250,243,.55)}
+.menu-product.promo-style-premiumFold .product-price-approx{color:rgba(253,250,243,.6)}
+.menu-product.promo-style-premiumFold .product-status{background:rgba(13,58,41,.74);color:#fdfaf3;backdrop-filter:none}
+.promo-fold{position:absolute;top:0;right:0;width:46px;height:46px;pointer-events:none;z-index:3;background:linear-gradient(225deg,var(--fold-gold) 0 50%,transparent 50%);border-top-right-radius:15px}
+@media(max-width:365px){
+ .menu-product.promo-style-ticket .product-price,
+ .menu-product.promo-style-premiumFold .product-price{max-width:74px;padding-left:8px}
+ .menu-product.promo-style-premiumFold .promo-eyebrow{padding-right:44px}
+ .promo-fold{width:38px;height:38px}
+}
