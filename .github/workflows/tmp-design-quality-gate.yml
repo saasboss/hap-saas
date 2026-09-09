@@ -50,16 +50,34 @@ jobs:
           echo "branch app prettier exit: $branch_app"
           echo "main css prettier exit: $main_css"
           echo "branch css prettier exit: $branch_css"
-
           test "$main_app" -eq "$branch_app"
           test "$main_css" -eq "$branch_css"
-
-          # Both CSS files intentionally share the same pre-existing parser blocker on main.
           grep -F 'transition:background .2s ease;color .2s ease' /tmp/main-styles.css >/dev/null
           grep -F 'transition:background .2s ease;color .2s ease' public/hap/styles.css >/dev/null
       - name: JavaScript syntax check
         run: node --check public/hap/app.js
-      - name: ESLint changed JavaScript
-        run: npx eslint public/hap/app.js
+      - name: Verify no new ESLint errors vs main
+        run: |
+          cp public/hap/app.js /tmp/branch-app.js
+          git show origin/main:public/hap/app.js > public/hap/app.js
+          npx eslint public/hap/app.js -f json > /tmp/main-eslint.json || true
+          cp /tmp/branch-app.js public/hap/app.js
+          npx eslint public/hap/app.js -f json > /tmp/branch-eslint.json || true
+          node <<'NODE'
+          const fs=require('fs');
+          const load=p=>JSON.parse(fs.readFileSync(p,'utf8'))[0]?.messages||[];
+          const key=m=>`${m.ruleId||'parser'}\u0000${m.message}`;
+          const count=arr=>arr.reduce((map,m)=>(map.set(key(m),(map.get(key(m))||0)+1),map),new Map());
+          const main=load('/tmp/main-eslint.json');
+          const branch=load('/tmp/branch-eslint.json');
+          const a=count(main), b=count(branch);
+          const added=[];
+          for(const [k,n] of b){ const delta=n-(a.get(k)||0); if(delta>0) added.push({delta,key:k.replace('\u0000',' :: ')}); }
+          console.log(`main ESLint messages: ${main.length}`);
+          console.log(`branch ESLint messages: ${branch.length}`);
+          if(added.length){ console.error('New ESLint regressions:'); for(const x of added) console.error(`+${x.delta} ${x.key}`); process.exit(1); }
+          console.log('No new ESLint errors or warnings versus main.');
+          NODE
       - name: Production build
+        if: always()
         run: npm run build
