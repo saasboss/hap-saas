@@ -2079,7 +2079,6 @@ function saveDesign(){
       return `<button type="button" class="design-layout-option ${a.template === id ? "selected" : ""}" data-action="design-choice" data-key="template" data-value="${id}" aria-pressed="${a.template === id}"><span class="design-layout-icon">${icon(layoutIcons[id], 18)}</span><strong>${escapeHtml(item.name)}</strong>${id === "modern" ? "<small>Recommended</small>" : "<small>&nbsp;</small>"}</button>`;
     })
     .join("")}</div>
-  <p id="design-layout-hint" class="design-layout-hint">${escapeHtml(currentLayout.sub)}</p>
  </section>`;
     const brand = `<details class="design-disclosure">
   <summary><span><strong>Brand</strong><small id="design-brand-current">${escapeHtml(currentPalette)} · ${a.mode === "dark" ? "Dark" : "Light"}</small></span>${icon("down", 15)}</summary>
@@ -2130,7 +2129,6 @@ function saveDesign(){
  </details>`;
     return `<div class="design-page design-compact-page">
   <div class="page-head design-page-head"><div><h1 class="page-title">Design</h1><p class="page-subtitle">Preview updates instantly.</p></div></div>
-  <p id="design-summary" class="wizard-summary design-summary" aria-live="polite">${escapeHtml(designSummary())}</p>
   ${draftPreviewPanel(sharedDraftPreview({ appearance: a, limit: d.expanded ? undefined : 1, fullMenu: d.expanded }), d.expanded)}
   ${d.error ? `<p class="promo-warn design-error" role="alert">${escapeHtml(d.error)}</p>` : ""}
   ${layout}
