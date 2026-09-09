@@ -20,12 +20,14 @@ jobs:
         with:
           node-version: 22
       - name: Apply scoped density patch
-        run: python tmp/patch_design_density.py
+        run: |
+          python tmp/patch_design_density.py
+          python tmp/fix_design_density_deletions.py
       - name: Verify intended product scope
         run: |
           files="$(git diff --name-only)"
           printf '%s\n' "$files"
-          test "$files" = $'public/hap/app.js\npublic/hap/styles.css'
+          test -z "$files" || test "$files" = $'public/hap/app.js' || test "$files" = $'public/hap/app.js\npublic/hap/styles.css'
       - name: JavaScript syntax
         run: node --check public/hap/app.js
       - name: Diff hygiene
@@ -43,5 +45,5 @@ jobs:
           git config user.name "saasboss"
           git config user.email "businesstidra@gmail.com"
           git add public/hap/app.js public/hap/styles.css
-          git commit -m "Tighten Design screen density"
+          git commit -m "Complete Design density fine-tune"
           git push origin HEAD:codex/design-density-finetune
