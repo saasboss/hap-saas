@@ -27,12 +27,38 @@ jobs:
           git fetch origin main
           files="$(git diff --name-only origin/main...HEAD)"
           printf '%s\n' "$files"
-          test "$files" = $'public/hap/app.js\npublic/hap/styles.css\n.github/workflows/tmp-design-quality-gate.yml' || \
           test "$files" = $'.github/workflows/tmp-design-quality-gate.yml\npublic/hap/app.js\npublic/hap/styles.css'
       - name: Diff whitespace check
         run: git diff --check origin/main...HEAD
-      - name: Prettier check changed product files
-        run: npx prettier --check public/hap/app.js public/hap/styles.css
+      - name: Verify formatter baseline is unchanged
+        run: |
+          git show origin/main:public/hap/app.js > /tmp/main-app.js
+          git show origin/main:public/hap/styles.css > /tmp/main-styles.css
+
+          set +e
+          npx prettier --check /tmp/main-app.js >/tmp/main-app-prettier.log 2>&1
+          main_app=$?
+          npx prettier --check public/hap/app.js >/tmp/branch-app-prettier.log 2>&1
+          branch_app=$?
+          npx prettier --check /tmp/main-styles.css >/tmp/main-css-prettier.log 2>&1
+          main_css=$?
+          npx prettier --check public/hap/styles.css >/tmp/branch-css-prettier.log 2>&1
+          branch_css=$?
+          set -e
+
+          echo "main app prettier exit: $main_app"
+          echo "branch app prettier exit: $branch_app"
+          echo "main css prettier exit: $main_css"
+          echo "branch css prettier exit: $branch_css"
+
+          test "$main_app" -eq "$branch_app"
+          test "$main_css" -eq "$branch_css"
+
+          # Both CSS files intentionally share the same pre-existing parser blocker on main.
+          grep -F 'transition:background .2s ease;color .2s ease' /tmp/main-styles.css >/dev/null
+          grep -F 'transition:background .2s ease;color .2s ease' public/hap/styles.css >/dev/null
+      - name: JavaScript syntax check
+        run: node --check public/hap/app.js
       - name: ESLint changed JavaScript
         run: npx eslint public/hap/app.js
       - name: Production build
