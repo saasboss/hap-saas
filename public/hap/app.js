@@ -2491,7 +2491,7 @@ function renderPublicItem(i,c,idx,opts={}){
      name, so it can never overlap the title. The fold triangle is the only
      decorative piece and it is purely absolute + pointer-events:none. */
   style==='ticket'?`<span class="promo-eyebrow">${label}</span>`:
-  style==='premiumFold'?`<span class="promo-fold" aria-hidden="true"><span>${label}</span></span><span class="promo-eyebrow">${label}</span>`:
+  style==='premiumFold'?`<span class="promo-fold" aria-hidden="true"></span><span class="promo-eyebrow">${label}</span>`:
   `<span class="promo-notch"><span>${label}</span></span>`;
  /* The offer style prints the price inside its own strip, so the card must not
     also render the price column — one price per card, never two. */
