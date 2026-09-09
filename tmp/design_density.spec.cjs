@@ -53,18 +53,22 @@ for (const vp of viewports) {
       for (const bottom of rows) expect(bottom).toBeLessThanOrEqual(navTop + 2);
     }
 
-    const brand = root.locator('.design-disclosure').filter({ hasText: 'Brand' });
+    const disclosures = root.locator('.design-disclosure');
+    const brand = disclosures.filter({ has: page.getByText('Brand', { exact: true }) });
+    await expect(brand).toHaveCount(1);
     await brand.locator('summary').click();
     await expect(brand).toHaveAttribute('open', '');
     await expect(brand.locator('.design-mode')).toBeVisible();
     await brand.locator('summary').click();
 
-    const background = root.locator('.design-disclosure').filter({ hasText: 'Background' });
+    const background = disclosures.filter({ has: page.getByText('Background', { exact: true }) });
+    await expect(background).toHaveCount(1);
     await background.locator('summary').click();
     await expect(background.locator('.design-background-grid')).toBeVisible();
     await background.locator('summary').click();
 
-    const fine = root.locator('.design-disclosure').filter({ hasText: 'Fine-tune' });
+    const fine = disclosures.filter({ has: page.getByText('Fine-tune', { exact: true }) });
+    await expect(fine).toHaveCount(1);
     await fine.locator('summary').click();
     await expect(fine.locator('.design-fine-grid')).toBeVisible();
 
