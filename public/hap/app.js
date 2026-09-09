@@ -441,7 +441,9 @@ function itemCountLabel(n,context){ return `${n} ${n===1?t('item',null,context):
 const PROMO_STYLES = [
  ['framed','Framed','Brand border with a notched label'],
  ['ribbon','Ribbon','Folded tab above the item'],
- ['offer','Band','Label band with optional terms']
+ ['offer','Band','Label band with optional terms'],
+ ['ticket','Ticket','Cream card with a dashed ticket outline'],
+ ['premiumFold',"Chef's pick",'Deep green card with a small gold fold']
 ];
 function itemStyleId(v){ return ({filled:'framed',editorial:'offer'})[v]||(PROMO_STYLES.some(s=>s[0]===v)?v:'framed'); }
 function promoStyleName(id){ return (PROMO_STYLES.find(s=>s[0]===itemStyleId(id))||PROMO_STYLES[0])[1]; }
@@ -2485,6 +2487,11 @@ function renderPublicItem(i,c,idx,opts={}){
   style==='filled'?`<span class="promo-inline-label">${label}</span>`:
   style==='editorial'?`<span class="promo-kicker-line">${label}</span>`:
   style==='offer'?`<span class="promo-strip-label">${label}</span>`:
+  /* Ticket and premium fold: the label lives in normal flow above the dish
+     name, so it can never overlap the title. The fold triangle is the only
+     decorative piece and it is purely absolute + pointer-events:none. */
+  style==='ticket'?`<span class="promo-eyebrow">${label}</span>`:
+  style==='premiumFold'?`<span class="promo-fold" aria-hidden="true"><span>${label}</span></span><span class="promo-eyebrow">${label}</span>`:
   `<span class="promo-notch"><span>${label}</span></span>`;
  /* The offer style prints the price inside its own strip, so the card must not
     also render the price column — one price per card, never two. */
