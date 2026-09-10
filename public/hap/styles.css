@@ -1400,7 +1400,27 @@ button.signal-row>svg:last-child{color:var(--subtle);flex:none}
 .design-savebar{position:sticky;bottom:0;z-index:4;display:grid;grid-template-columns:1fr 1.35fr;gap:7px;margin-top:10px;padding:8px;border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(12px);box-shadow:0 -8px 22px rgba(26,23,19,.06)}
 .design-savebar .btn{min-height:44px}.design-savebar span{grid-column:1/-1;text-align:center;color:var(--muted);font-size:9px;line-height:1.2}
 @media(max-width:340px){.design-layout-option{min-height:78px;padding-inline:3px}.design-layout-option strong{font-size:10px}.design-section{padding:9px}.design-fine-grid{grid-template-columns:1fr}.design-essential-option{grid-column:1}.design-background-option{font-size:9px}}
-@media(prefers-reduced-motion:reduce){.design-disclosure>summary>svg{transition:none}.design-palette-strip{scroll-snap-type:none}}
+@media(prefers-reduced-motion:reduce){.design-disclosure>summary>svg{transition:none}.design-palette-strip{scroll-snap-type:none}.design-stage-page{transition:none}}
+
+/* --- Design: pinned miniature stage + two steps --- */
+.design-onescreen .design-page-head{margin-bottom:4px}
+.design-onescreen .design-page-head .page-title{margin:0}
+.design-onescreen .design-summary{margin:8px 0 0;order:0}
+/* Pinned: the stage stays put while the step body below it changes. */
+.design-onescreen .design-stage-panel{margin:0;position:sticky;top:0;z-index:3;background:var(--surface)}
+/* Fixed box: the miniature never resizes or moves when a choice changes. */
+.design-compact-page .design-stage{height:clamp(148px,30dvh,232px);max-height:none;overflow:hidden}
+.design-compact-page .design-stage.expanded{height:min(58dvh,460px);max-height:none;overflow:auto}
+.design-stage-page{width:100%;min-width:0;zoom:var(--stage-zoom,1);transition:opacity .14s var(--ease)}
+.design-stage-page.swapping{opacity:0}
+.design-step-body{min-width:0}
+.design-step-content>.design-section:first-child{margin-top:0}
+.design-steps{display:flex;align-items:center;gap:14px;margin:10px 1px 8px;padding:0;list-style:none}
+.design-steps li{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.design-steps li i{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.design-steps li.current{color:var(--text)}
+.design-steps li.current i{background:var(--brand)}
+
 
 /* ===================== Promotion treatments: Ticket + Chef's pick fold =====================
    Both are visual modifiers of the existing .menu-product card: same grid
