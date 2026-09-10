@@ -2061,21 +2061,33 @@ function saveDesign(){
  if(result.status!=='ok'){d.error=result.error?.message||'Could not save this design. Your choices are still here.';render();return;}
  ui.designDraft=null;toast('Design saved');render();
 }
-  function appearancePage() {
-    const d = designDraft(),
-      a = d.appearance;
+  /* One-screen design: a real, miniature menu render pinned at the top, and a
+     two-step body underneath. Only the body swaps between steps, so the
+     preview keeps its exact size, position and scroll. */
+  function designStage(d) {
+    const a = d.appearance;
+    return `<aside class="draft-preview-panel design-stage-panel">
+  <div class="section-row"><strong>Menu preview</strong><button type="button" class="btn small" data-action="expand-draft-preview" aria-expanded="${d.expanded}">${d.expanded ? "Collapse preview" : "Expand preview"}</button></div>
+  <div id="draft-preview-content" class="draft-preview-content design-stage ${d.expanded ? "expanded" : ""}"><div id="design-stage-page" class="design-stage-page">${sharedDraftPreview({ appearance: a, fullMenu: d.expanded, limit: d.expanded ? undefined : 3 })}</div></div>
+ </aside>`;
+  }
+  function designSteps(d) {
+    return `<ol class="design-steps" aria-label="Design steps">${[
+      [0, "Layout"],
+      [1, "Style"],
+    ]
+      .map(
+        ([step, label]) =>
+          `<li class="${d.step === step ? "current" : ""}"${d.step === step ? ' aria-current="step"' : ""}><i></i>${label}</li>`,
+      )
+      .join("")}</ol>`;
+  }
+  function designLayoutStep(a) {
     const currentLayout = templateOf(a.template);
-    const currentPalette = a.palette === "custom" ? "Custom colour" : paletteOf(a.palette).name;
-    const currentBackground =
-      (backgrounds.find(([id]) => id === a.background) || [, a.background])[1] || a.background;
     const layoutIcons = { editorial: "menu", modern: "image", grid: "grid" };
-    const layout = `<section class="design-section design-layout-section" aria-labelledby="design-layout-title">
+    return `<section class="design-section design-layout-section" aria-labelledby="design-layout-title">
   <div class="design-section-head"><div><span class="design-section-kicker">Layout</span><strong id="design-layout-title">Choose the structure</strong></div><small id="design-layout-current">${escapeHtml(currentLayout.name)}</small></div>
-  <div class="design-layout-grid" role="group" aria-label="Menu layout">${[
-    "editorial",
-    "modern",
-    "grid",
-  ]
+  <div class="design-layout-grid" role="group" aria-label="Menu layout">${["editorial", "modern", "grid"]
     .map((id) => {
       const item = templateOf(id);
       return `<button type="button" class="design-layout-option ${a.template === id ? "selected" : ""}" data-action="design-choice" data-key="template" data-value="${id}" aria-pressed="${a.template === id}"><span class="design-layout-icon">${icon(layoutIcons[id], 18)}</span><strong>${escapeHtml(item.name)}</strong>${id === "modern" ? "<small>Recommended</small>" : "<small>&nbsp;</small>"}</button>`;
@@ -2083,17 +2095,31 @@ function saveDesign(){
     .join("")}</div>
   <p id="design-layout-hint" class="design-layout-hint">${escapeHtml(currentLayout.sub)}</p>
  </section>`;
-    const brand = `<details class="design-disclosure">
-  <summary><span><strong>Brand</strong><small id="design-brand-current">${escapeHtml(currentPalette)} · ${a.mode === "dark" ? "Dark" : "Light"}</small></span>${icon("down", 15)}</summary>
-  <div class="design-disclosure-body"><div class="segment-control design-mode" role="group" aria-label="Menu colour mode">${["light", "dark"].map((mode) => `<button type="button" class="${a.mode === mode ? "active selected" : ""}" data-action="design-choice" data-key="mode" data-value="${mode}" aria-pressed="${a.mode === mode}">${mode === "light" ? "Light" : "Dark"}</button>`).join("")}</div>
-   <div class="design-palette-strip" role="group" aria-label="Brand palette">${PALETTES.map((p) => `<button type="button" class="design-palette-option ${a.palette === p.id ? "selected" : ""}" data-action="design-choice" data-key="palette" data-value="${p.id}" aria-pressed="${a.palette === p.id}" aria-label="${escapeHtml(p.name)} palette"><span class="palette-chip" style="--pc-brand:${p[a.mode].brand};--pc-accent:${p[a.mode].accent};--pc-bg:${p[a.mode].bg}"></span><strong>${escapeHtml(p.name)}</strong></button>`).join("")}</div>
-  </div>
- </details>`;
-    const background = `<details class="design-disclosure">
-  <summary><span><strong>Background</strong><small id="design-background-current">${escapeHtml(currentBackground)}</small></span>${icon("down", 15)}</summary>
-  <div class="design-disclosure-body"><div class="design-background-grid" role="group" aria-label="Background style">${backgrounds.map(([id, label]) => `<button type="button" class="design-background-option ${a.background === id ? "selected" : ""}" data-action="design-choice" data-key="background" data-value="${id}" aria-pressed="${a.background === id}">${escapeHtml(label)}</button>`).join("")}</div></div>
- </details>`;
-    const fineTune = `<details class="design-disclosure design-fine-tune">
+  }
+  function designStyleStep(a) {
+    return `<section class="design-section" aria-label="Colour">
+  <div class="design-section-head"><div><span class="design-section-kicker">Colour</span><strong>Brand and mode</strong></div></div>
+  <div class="segment-control design-mode" role="group" aria-label="Menu colour mode">${["light", "dark"]
+    .map(
+      (mode) =>
+        `<button type="button" class="${a.mode === mode ? "active selected" : ""}" data-action="design-choice" data-key="mode" data-value="${mode}" aria-pressed="${a.mode === mode}">${mode === "light" ? "Light" : "Dark"}</button>`,
+    )
+    .join("")}</div>
+  <div class="design-palette-strip" role="group" aria-label="Brand palette">${PALETTES.map(
+    (p) =>
+      `<button type="button" class="design-palette-option ${a.palette === p.id ? "selected" : ""}" data-action="design-choice" data-key="palette" data-value="${p.id}" aria-pressed="${a.palette === p.id}" aria-label="${escapeHtml(p.name)} palette"><span class="palette-chip" data-palette-chip="${p.id}" style="--pc-brand:${p[a.mode].brand};--pc-accent:${p[a.mode].accent};--pc-bg:${p[a.mode].bg}"></span><strong>${escapeHtml(p.name)}</strong></button>`,
+  ).join("")}</div>
+ </section>
+ <section class="design-section" aria-label="Background">
+  <div class="design-section-head"><div><span class="design-section-kicker">Background</span><strong>Surface style</strong></div><small id="design-background-current">${escapeHtml((backgrounds.find(([id]) => id === a.background) || [, a.background])[1] || a.background)}</small></div>
+  <div class="design-background-grid" role="group" aria-label="Background style">${backgrounds
+    .map(
+      ([id, label]) =>
+        `<button type="button" class="design-background-option ${a.background === id ? "selected" : ""}" data-action="design-choice" data-key="background" data-value="${id}" aria-pressed="${a.background === id}">${escapeHtml(label)}</button>`,
+    )
+    .join("")}</div>
+ </section>
+ <details class="design-disclosure design-fine-tune">
   <summary><span><strong>Fine-tune</strong><small>Typography, photos &amp; corners</small></span>${icon("down", 15)}</summary>
   <div class="design-disclosure-body"><div class="design-fine-grid">
    <label class="field">Custom brand colour<input aria-label="Custom brand colour" type="color" data-design-field="brand" value="${escapeHtml(a.brand)}"></label>
@@ -2130,16 +2156,26 @@ function saveDesign(){
    <label class="checkbox-label design-essential-option" data-essential-only ${a.template === "editorial" ? "" : "hidden"}><input type="checkbox" data-design-field="thumbnails" ${a.thumbnails ? "checked" : ""}> Show thumbnails in Essential</label>
   </div></div>
  </details>`;
-    return `<div class="design-page design-compact-page">
-  <div class="page-head design-page-head"><div><div class="eyebrow">Your menu</div><h1 class="page-title">Design</h1><p class="page-subtitle">One preview. Change the look without changing your menu.</p></div></div>
+  }
+  function designStepBody(d) {
+    const body = d.step === 1 ? designStyleStep(d.appearance) : designLayoutStep(d.appearance);
+    const actions =
+      d.step === 1
+        ? `<button type="button" class="btn" data-action="design-step-back">Back</button><button type="button" class="btn primary" data-action="design-save">Save design</button><span>Changes go live only after Save.</span>`
+        : `<button type="button" class="btn" data-action="design-cancel">Cancel</button><button type="button" class="btn primary" data-action="design-step-next">Next</button><span>Nothing changes for guests yet.</span>`;
+    return `${designSteps(d)}<div class="design-step-content">${body}</div><div class="design-savebar">${actions}</div>`;
+  }
+  function appearancePage() {
+    const d = designDraft();
+    return `<div class="design-page design-compact-page design-onescreen">
+  <div class="page-head design-page-head"><div><div class="eyebrow">Your menu</div><h1 class="page-title">Design</h1></div></div>
+  ${designStage(d)}
   <p id="design-summary" class="wizard-summary design-summary" aria-live="polite">${escapeHtml(designSummary())}</p>
-  ${draftPreviewPanel(sharedDraftPreview({ appearance: a, limit: d.expanded ? undefined : 2, fullMenu: d.expanded }), d.expanded)}
   ${d.error ? `<p class="promo-warn design-error" role="alert">${escapeHtml(d.error)}</p>` : ""}
-  ${layout}
-  <div class="design-disclosures">${brand}${background}${fineTune}</div>
-  <div class="design-savebar"><button type="button" class="btn" data-action="design-cancel">Cancel</button><button type="button" class="btn primary" data-action="design-save">Save design</button><span>Changes go live only after Save.</span></div>
+  <div id="design-step-body" class="design-step-body">${designStepBody(d)}</div>
  </div>`;
   }
+
 /* ---------------- Billing ---------------- */
 const HAP_PLAN = {id:'hap',name:'Hap',price:2500,currency:'ALL',interval:'monthly'};
 const PLAN_LABELS = {hap:'Hap',starter:'Hap',growth:'Hap',scale:'Hap'};
