@@ -2015,17 +2015,39 @@ function designSummary(){
  const a=designDraft().appearance;
  return `${templateOf(a.template).name} · ${a.palette==='custom'?'Custom colour':paletteOf(a.palette).name} · ${a.mode==='dark'?'Dark':'Light'}`;
 }
+  /* The pinned stage renders the menu at real phone width and scales it down,
+     so the miniature is the real thing, not an approximation. */
+  function fitDesignStage() {
+    const frame = document.getElementById("draft-preview-content"),
+      page = document.getElementById("design-stage-page");
+    if (!frame || !page) return;
+    const w = frame.clientWidth;
+    if (w) page.style.setProperty("--stage-zoom", (w / 430).toFixed(4));
+  }
+  window.addEventListener("resize", fitDesignStage);
   function refreshDesignPreview() {
     const d = designDraft(),
       a = d.appearance,
-      preview = document.getElementById("draft-preview-content"),
+      stagePage = document.getElementById("design-stage-page"),
+      preview = stagePage || document.getElementById("draft-preview-content"),
       summary = document.getElementById("design-summary");
-    if (preview)
-      preview.innerHTML = sharedDraftPreview({
+    if (preview) {
+      const html = sharedDraftPreview({
         appearance: a,
-        limit: d.expanded ? undefined : 2,
+        limit: d.expanded ? undefined : stagePage ? 3 : 2,
         fullMenu: d.expanded,
       });
+      if (stagePage) {
+        /* Swap the contents in place: the frame keeps its box, only the
+           inside cross-fades. */
+        stagePage.classList.add("swapping");
+        stagePage.innerHTML = html;
+        fitDesignStage();
+        requestAnimationFrame(() => stagePage.classList.remove("swapping"));
+      } else {
+        preview.innerHTML = html;
+      }
+    }
     if (summary) summary.textContent = designSummary();
     const layout = templateOf(a.template);
     const palette = a.palette === "custom" ? "Custom colour" : paletteOf(a.palette).name;
@@ -2044,9 +2066,18 @@ function designSummary(){
       if (el.closest(".design-mode")) el.classList.toggle("active", yes);
       el.setAttribute("aria-pressed", String(yes));
     });
+    /* Palette chips are mode-dependent, so they follow a Light/Dark change. */
+    document.querySelectorAll("[data-palette-chip]").forEach((chip) => {
+      const p = PALETTES.find((x) => x.id === chip.dataset.paletteChip);
+      if (!p) return;
+      chip.style.setProperty("--pc-brand", p[a.mode].brand);
+      chip.style.setProperty("--pc-accent", p[a.mode].accent);
+      chip.style.setProperty("--pc-bg", p[a.mode].bg);
+    });
     const essentialOnly = document.querySelector("[data-essential-only]");
     if (essentialOnly) essentialOnly.hidden = a.template !== "editorial";
   }
+
 function updateDesignField(el){
  const d=designDraft(),key=el.dataset.designField;
  d.appearance[key]=el.type==='checkbox'?el.checked:el.value;
