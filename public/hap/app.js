@@ -2954,7 +2954,7 @@ function postRender(){
  }
  requestAnimationFrame(()=>{
   document.querySelectorAll('.reveal-item').forEach((el,i)=>{ if(!('IntersectionObserver' in window)){el.classList.add('visible');return;} });
-  setupReveal(); setupPublicObservers(); renderLiveQr(); mountTour(); scaleTemplatePreviews();
+  setupReveal(); setupPublicObservers(); renderLiveQr(); mountTour(); scaleTemplatePreviews(); fitDesignStage();
  });
  if(state.mode==='landing') startLandingDemo();
  if(state.mode==='preview'&&!state.preview.languageConfirmed&&!ui.sheet&&!ui.modal){ setTimeout(()=>{ ui.sheet='language'; render(); },80); }
