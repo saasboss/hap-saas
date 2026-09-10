@@ -3100,6 +3100,16 @@ app.addEventListener('click',e=>{
   d.dirty=true;d.error='';refreshDesignPreview();return;
  }
  if(a==='design-step'){designDraft().step=Math.max(0,Math.min(2,Number(btn.dataset.step)));render();return;}
+ /* Step changes rebuild only the body below the stage, so the pinned preview
+    keeps its exact box and scroll. */
+ if(a==='design-step-next'||a==='design-step-back'){
+  const d=designDraft();d.step=a==='design-step-next'?1:0;
+  const body=document.getElementById('design-step-body');
+  if(!body){render();return;}
+  body.innerHTML=designStepBody(d);
+  refreshDesignPreview();
+  return;
+ }
  if(a==='design-cancel'){ui.designDraft=null;setMenuTab('items');render();return;}
  if(a==='design-save'){saveDesign();return;}
  if(a==='expand-draft-preview'){
