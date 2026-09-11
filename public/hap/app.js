@@ -2023,7 +2023,7 @@ function designSummary(){
     if (!frame || !page) return;
     const w = frame.clientWidth;
     /* Slightly under real width: the miniature reads as a preview, not a page. */
-    if (w) page.style.setProperty("--stage-zoom", Math.min((w / 430) * 0.52, 0.45).toFixed(4));
+    if (w) page.style.setProperty("--stage-zoom", Math.min((w / 430) * 0.52, 0.39).toFixed(4));
   }
   window.addEventListener("resize", fitDesignStage);
   function refreshDesignPreview() {
