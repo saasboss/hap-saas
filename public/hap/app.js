@@ -2022,8 +2022,9 @@ function designSummary(){
       page = document.getElementById("design-stage-page");
     if (!frame || !page) return;
     const w = frame.clientWidth;
-    /* Slightly under real width: the miniature reads as a preview, not a page. */
-    if (w) page.style.setProperty("--stage-zoom", Math.min((w / 430) * 0.52, 0.39).toFixed(4));
+    /* The 430px render is scaled to the frame width, so the miniature fills it
+       edge to edge at the same proportions guests see. */
+    if (w) page.style.setProperty("--stage-zoom", (w / 430).toFixed(4));
   }
   window.addEventListener("resize", fitDesignStage);
   function refreshDesignPreview() {
