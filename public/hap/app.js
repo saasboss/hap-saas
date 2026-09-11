@@ -2022,7 +2022,8 @@ function designSummary(){
       page = document.getElementById("design-stage-page");
     if (!frame || !page) return;
     const w = frame.clientWidth;
-    if (w) page.style.setProperty("--stage-zoom", (w / 430).toFixed(4));
+    /* Slightly under real width: the miniature reads as a preview, not a page. */
+    if (w) page.style.setProperty("--stage-zoom", ((w / 430) * 0.86).toFixed(4));
   }
   window.addEventListener("resize", fitDesignStage);
   function refreshDesignPreview() {
@@ -2034,7 +2035,7 @@ function designSummary(){
     if (preview) {
       const html = sharedDraftPreview({
         appearance: a,
-        limit: d.expanded ? undefined : stagePage ? 3 : 2,
+        limit: d.expanded ? undefined : 2,
         fullMenu: d.expanded,
       });
       if (stagePage) {
@@ -2099,7 +2100,7 @@ function saveDesign(){
     const a = d.appearance;
     return `<aside class="draft-preview-panel design-stage-panel">
   <div class="section-row"><strong>Menu preview</strong><button type="button" class="btn small" data-action="expand-draft-preview" aria-expanded="${d.expanded}">${d.expanded ? "Collapse preview" : "Expand preview"}</button></div>
-  <div id="draft-preview-content" class="draft-preview-content design-stage ${d.expanded ? "expanded" : ""}"><div id="design-stage-page" class="design-stage-page">${sharedDraftPreview({ appearance: a, fullMenu: d.expanded, limit: d.expanded ? undefined : 3 })}</div></div>
+  <div id="draft-preview-content" class="draft-preview-content design-stage ${d.expanded ? "expanded" : ""}"><div id="design-stage-page" class="design-stage-page">${sharedDraftPreview({ appearance: a, fullMenu: d.expanded, limit: d.expanded ? undefined : 2 })}</div></div>
  </aside>`;
   }
   function designSteps(d) {
