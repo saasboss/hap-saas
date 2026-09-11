@@ -1409,9 +1409,10 @@ button.signal-row>svg:last-child{color:var(--subtle);flex:none}
 /* Pinned: the stage stays put while the step body below it changes. */
 .design-onescreen .design-stage-panel{margin:0;position:sticky;top:0;z-index:3;background:var(--surface);box-shadow:0 8px 16px -12px rgba(26,23,19,.35)}
 /* Fixed box: the miniature never resizes or moves when a choice changes. */
-.design-compact-page .design-stage{height:clamp(206px,34dvh,268px);max-height:none;overflow:hidden}
+.design-compact-page .design-stage{height:auto;max-height:40dvh;overflow:hidden}
 .design-compact-page .design-stage.expanded{height:min(58dvh,460px);max-height:none;overflow:auto}
-.design-stage-page{width:100%;min-width:0;zoom:var(--stage-zoom,1);transition:opacity .14s var(--ease)}
+/* Rendered at real phone width, then scaled to fill the frame exactly. */
+.design-stage-page{width:430px;min-width:430px;zoom:var(--stage-zoom,1);transition:opacity .14s var(--ease)}
 .design-stage-page.swapping{opacity:0}
 .design-step-body{min-width:0}
 .design-step-content>.design-section:first-child{margin-top:0}
