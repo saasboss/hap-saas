@@ -78,3 +78,5 @@ The next agent must verify the named branch and commit before editing. It contin
 - 2026-09-08 — Stage 5 item drafts checked; next Stage 6 scheduling then Stage 7 full regression/delivery. Optional reviewer hit usage limit after initial finding; builder completed remaining review and fixes.
 
 - 2026-09-08 — Stage 6 scheduling correctness checked. Next Stage 7 final matrix, state/checklist cleanup, complete delivery verification.
+
+- 2026-10-17 (Lovable): Items/categories batches 1-3, promo looks, Design screen two-step pinned preview done on owner request. Open: preview fit polish. See docs/HANDOFF_CLAUDE.md.
